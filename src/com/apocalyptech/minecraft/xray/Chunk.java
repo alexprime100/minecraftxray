@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.regex.PatternSyntaxException;
 
+import com.apocalyptech.minecraft.Point;
 import org.lwjgl.opengl.GL11;
 
 import com.apocalyptech.minecraft.xray.dtf.ShortArrayTag;
@@ -95,11 +96,12 @@ public abstract class Chunk {
 
 	public HashMap<Integer, Boolean> usedTextureSheets;
 
-	private final float fence_postsize = .125f;
-	private final float fence_postsize_h = fence_postsize/2f;
-	private final float fence_slat_height = .1875f;
-	private final float fence_top_slat_offset = .375f;
-	private final float fence_slat_start_offset = -.125f;
+	/*private final float fence.fence_postsize = .125f;
+	private final float fence.fence_postsize_h = fence.fence_postsize/2f;
+	private final float fence.fence_slat_height = .1875f;
+	private final float fence.fence_top_slat_offset = .375f;
+	private final float fence.fence_slat_start_offset = -.125f;*/
+	private Fence fence = new Fence();
 
 	private static enum RENDER_PASS {
 		SOLIDS,
@@ -2389,17 +2391,17 @@ public abstract class Chunk {
 		float x = xxx + this.x*16;
 		float z = zzz + this.z*16;
 		float y = yyy;
-		float slat_start = y+fence_slat_start_offset;
+		float slat_start = y + fence.fence_slat_start_offset;
 		boolean beta19_fences = XRay.toggle.beta19_fences;
 		
 		// First the fencepost
-		this.renderVertical(textureId, x+fence_postsize, z+fence_postsize, x+fence_postsize, z-fence_postsize, y-0.5f, 1f, 4, 16, 6, 0);
-		this.renderVertical(textureId, x+fence_postsize, z-fence_postsize, x-fence_postsize, z-fence_postsize, y-0.5f, 1f, 4, 16, 6, 0);
-		this.renderVertical(textureId, x-fence_postsize, z-fence_postsize, x-fence_postsize, z+fence_postsize, y-0.5f, 1f, 4, 16, 6, 0);
-		this.renderVertical(textureId, x-fence_postsize, z+fence_postsize, x+fence_postsize, z+fence_postsize, y-0.5f, 1f, 4, 16, 6, 0);
+		this.renderVertical(textureId, x+fence.fence_postsize, z+fence.fence_postsize, x+fence.fence_postsize, z-fence.fence_postsize, y-0.5f, 1f, 4, 16, 6, 0);
+		this.renderVertical(textureId, x+fence.fence_postsize, z-fence.fence_postsize, x-fence.fence_postsize, z-fence.fence_postsize, y-0.5f, 1f, 4, 16, 6, 0);
+		this.renderVertical(textureId, x-fence.fence_postsize, z-fence.fence_postsize, x-fence.fence_postsize, z+fence.fence_postsize, y-0.5f, 1f, 4, 16, 6, 0);
+		this.renderVertical(textureId, x-fence.fence_postsize, z+fence.fence_postsize, x+fence.fence_postsize, z+fence.fence_postsize, y-0.5f, 1f, 4, 16, 6, 0);
 		if (y == this.maxHeight || !isSolid(this.getAdjBlockId(xxx, yyy, zzz, FACING.TOP, blockOffset)))
 		{
-			this.renderHorizontal(textureId, x+fence_postsize, z+fence_postsize, x-fence_postsize, z-fence_postsize, y+0.5f, 4, 4, 6, 6, false);
+			this.renderHorizontal(textureId, x+fence.fence_postsize, z+fence.fence_postsize, x-fence.fence_postsize, z-fence.fence_postsize, y+0.5f, 4, 4, 6, 6, false);
 		}
 
 		short adj_id;
@@ -2412,32 +2414,32 @@ public abstract class Chunk {
 			// Fence to the West
 
 			// Bottom slat
-			this.renderVertical(textureId, x-fence_postsize, z+fence_postsize_h, x-1f+fence_postsize, z+fence_postsize_h, slat_start, fence_slat_height, 12, 3, 2, 5);
-			this.renderVertical(textureId, x-fence_postsize, z-fence_postsize_h, x-1f+fence_postsize, z-fence_postsize_h, slat_start, fence_slat_height, 12, 3, 2, 5);
-			this.renderHorizontal(textureId, x-fence_postsize, z+fence_postsize_h, x-1f+fence_postsize, z-fence_postsize_h, slat_start, 2, 12, 14, 2, false);
-			this.renderHorizontal(textureId, x-fence_postsize, z+fence_postsize_h, x-1f+fence_postsize, z-fence_postsize_h, slat_start+fence_slat_height, 2, 12, 14, 2, false);
+			this.renderVertical(textureId, x - fence.fence_postsize, z + fence.fence_postsize_h, x - 1f + fence.fence_postsize, z + fence.fence_postsize_h, slat_start, fence.fence_slat_height, 12, 3, 2, 5);
+			this.renderVertical(textureId, x - fence.fence_postsize, z - fence.fence_postsize_h, x - 1f + fence.fence_postsize, z - fence.fence_postsize_h, slat_start, fence.fence_slat_height, 12, 3, 2, 5);
+			this.renderHorizontal(textureId, x - fence.fence_postsize, z + fence.fence_postsize_h, x - 1f + fence.fence_postsize, z - fence.fence_postsize_h, slat_start, 2, 12, 14, 2, false);
+			this.renderHorizontal(textureId, x - fence.fence_postsize, z + fence.fence_postsize_h, x - 1f + fence.fence_postsize, z - fence.fence_postsize_h, slat_start + fence.fence_slat_height, 2, 12, 14, 2, false);
 
 			// Top slat
-			this.renderVertical(textureId, x-fence_postsize, z+fence_postsize_h, x-1f+fence_postsize, z+fence_postsize_h, slat_start+fence_top_slat_offset, fence_slat_height, 12, 3, 2, 5);
-			this.renderVertical(textureId, x-fence_postsize, z-fence_postsize_h, x-1f+fence_postsize, z-fence_postsize_h, slat_start+fence_top_slat_offset, fence_slat_height, 12, 3, 2, 5);
-			this.renderHorizontal(textureId, x-fence_postsize, z+fence_postsize_h, x-1f+fence_postsize, z-fence_postsize_h, slat_start+fence_top_slat_offset, 2, 12, 14, 2, false);
-			this.renderHorizontal(textureId, x-fence_postsize, z+fence_postsize_h, x-1f+fence_postsize, z-fence_postsize_h, slat_start+fence_top_slat_offset+fence_slat_height, 2, 12, 14, 2, false);
+			this.renderVertical(textureId, x - fence.fence_postsize, z + fence.fence_postsize_h, x - 1f + fence.fence_postsize, z + fence.fence_postsize_h, slat_start + fence.fence_top_slat_offset, fence.fence_slat_height, 12, 3, 2, 5);
+			this.renderVertical(textureId, x - fence.fence_postsize, z - fence.fence_postsize_h, x - 1f + fence.fence_postsize, z - fence.fence_postsize_h, slat_start + fence.fence_top_slat_offset, fence.fence_slat_height, 12, 3, 2, 5);
+			this.renderHorizontal(textureId, x - fence.fence_postsize, z + fence.fence_postsize_h, x - 1f + fence.fence_postsize, z - fence.fence_postsize_h, slat_start + fence.fence_top_slat_offset, 2, 12, 14, 2, false);
+			this.renderHorizontal(textureId, x - fence.fence_postsize, z + fence.fence_postsize_h, x - 1f + fence.fence_postsize, z - fence.fence_postsize_h, slat_start + fence.fence_top_slat_offset + fence.fence_slat_height, 2, 12, 14, 2, false);
 		}
 		else if (beta19_fences && this.isSolid(adj_id))
 		{
 			// Solid block to the West
 
 			// Bottom slat
-			this.renderVertical(textureId, x-fence_postsize, z+fence_postsize_h, x-.5f, z+fence_postsize_h, slat_start, fence_slat_height, 6, 3, 0, 5);
-			this.renderVertical(textureId, x-fence_postsize, z-fence_postsize_h, x-.5f, z-fence_postsize_h, slat_start, fence_slat_height, 6, 3, 0, 5);
-			this.renderHorizontal(textureId, x-fence_postsize, z+fence_postsize_h, x-.5f, z-fence_postsize_h, slat_start, 2, 6, 14, 0, false);
-			this.renderHorizontal(textureId, x-fence_postsize, z+fence_postsize_h, x-.5f, z-fence_postsize_h, slat_start+fence_slat_height, 2, 6, 14, 0, false);
+			this.renderVertical(textureId, x - fence.fence_postsize, z + fence.fence_postsize_h, x-.5f, z + fence.fence_postsize_h, slat_start, fence.fence_slat_height, 6, 3, 0, 5);
+			this.renderVertical(textureId, x - fence.fence_postsize, z - fence.fence_postsize_h, x-.5f, z - fence.fence_postsize_h, slat_start, fence.fence_slat_height, 6, 3, 0, 5);
+			this.renderHorizontal(textureId, x - fence.fence_postsize, z + fence.fence_postsize_h, x-.5f, z - fence.fence_postsize_h, slat_start, 2, 6, 14, 0, false);
+			this.renderHorizontal(textureId, x - fence.fence_postsize, z + fence.fence_postsize_h, x-.5f, z - fence.fence_postsize_h, slat_start + fence.fence_slat_height, 2, 6, 14, 0, false);
 
 			// Top slat
-			this.renderVertical(textureId, x-fence_postsize, z+fence_postsize_h, x-.5f, z+fence_postsize_h, slat_start+fence_top_slat_offset, fence_slat_height, 6, 3, 0, 5);
-			this.renderVertical(textureId, x-fence_postsize, z-fence_postsize_h, x-.5f, z-fence_postsize_h, slat_start+fence_top_slat_offset, fence_slat_height, 6, 3, 0, 5);
-			this.renderHorizontal(textureId, x-fence_postsize, z+fence_postsize_h, x-.5f, z-fence_postsize_h, slat_start+fence_top_slat_offset, 2, 6, 14, 0, false);
-			this.renderHorizontal(textureId, x-fence_postsize, z+fence_postsize_h, x-.5f, z-fence_postsize_h, slat_start+fence_top_slat_offset+fence_slat_height, 2, 6, 14, 0, false);
+			this.renderVertical(textureId, x-fence.fence_postsize, z+fence.fence_postsize_h, x-.5f, z+fence.fence_postsize_h, slat_start+fence.fence_top_slat_offset, fence.fence_slat_height, 6, 3, 0, 5);
+			this.renderVertical(textureId, x-fence.fence_postsize, z-fence.fence_postsize_h, x-.5f, z-fence.fence_postsize_h, slat_start+fence.fence_top_slat_offset, fence.fence_slat_height, 6, 3, 0, 5);
+			this.renderHorizontal(textureId, x-fence.fence_postsize, z+fence.fence_postsize_h, x-.5f, z-fence.fence_postsize_h, slat_start+fence.fence_top_slat_offset, 2, 6, 14, 0, false);
+			this.renderHorizontal(textureId, x-fence.fence_postsize, z+fence.fence_postsize_h, x-.5f, z-fence.fence_postsize_h, slat_start+fence.fence_top_slat_offset+fence.fence_slat_height, 2, 6, 14, 0, false);
 		}
 		else if (adj_id > -1 && blockArray[adj_id] != null && blockArray[adj_id].type == BLOCK_TYPE.FENCE_GATE)
 		{
@@ -2449,16 +2451,16 @@ public abstract class Chunk {
 				if (adj_data == 0 || adj_data == 2)
 				{
 					// Bottom slat
-					this.renderVertical(textureId, x-fence_postsize, z+fence_postsize_h, x-.5f, z+fence_postsize_h, slat_start, fence_slat_height, 6, 3, 0, 5);
-					this.renderVertical(textureId, x-fence_postsize, z-fence_postsize_h, x-.5f, z-fence_postsize_h, slat_start, fence_slat_height, 6, 3, 0, 5);
-					this.renderHorizontal(textureId, x-fence_postsize, z+fence_postsize_h, x-.5f, z-fence_postsize_h, slat_start, 2, 6, 14, 0, false);
-					this.renderHorizontal(textureId, x-fence_postsize, z+fence_postsize_h, x-.5f, z-fence_postsize_h, slat_start+fence_slat_height, 2, 6, 14, 0, false);
+					this.renderVertical(textureId, x-fence.fence_postsize, z+fence.fence_postsize_h, x-.5f, z+fence.fence_postsize_h, slat_start, fence.fence_slat_height, 6, 3, 0, 5);
+					this.renderVertical(textureId, x-fence.fence_postsize, z-fence.fence_postsize_h, x-.5f, z-fence.fence_postsize_h, slat_start, fence.fence_slat_height, 6, 3, 0, 5);
+					this.renderHorizontal(textureId, x-fence.fence_postsize, z+fence.fence_postsize_h, x-.5f, z-fence.fence_postsize_h, slat_start, 2, 6, 14, 0, false);
+					this.renderHorizontal(textureId, x-fence.fence_postsize, z+fence.fence_postsize_h, x-.5f, z-fence.fence_postsize_h, slat_start+fence.fence_slat_height, 2, 6, 14, 0, false);
 
 					// Top slat
-					this.renderVertical(textureId, x-fence_postsize, z+fence_postsize_h, x-.5f, z+fence_postsize_h, slat_start+fence_top_slat_offset, fence_slat_height, 8, 3, 0, 5);
-					this.renderVertical(textureId, x-fence_postsize, z-fence_postsize_h, x-.5f, z-fence_postsize_h, slat_start+fence_top_slat_offset, fence_slat_height, 8, 3, 0, 5);
-					this.renderHorizontal(textureId, x-fence_postsize, z+fence_postsize_h, x-.5f, z-fence_postsize_h, slat_start+fence_top_slat_offset, 2, 8, 14, 0, false);
-					this.renderHorizontal(textureId, x-fence_postsize, z+fence_postsize_h, x-.5f, z-fence_postsize_h, slat_start+fence_top_slat_offset+fence_slat_height, 2, 8, 14, 0, false);
+					this.renderVertical(textureId, x-fence.fence_postsize, z+fence.fence_postsize_h, x-.5f, z+fence.fence_postsize_h, slat_start+fence.fence_top_slat_offset, fence.fence_slat_height, 8, 3, 0, 5);
+					this.renderVertical(textureId, x-fence.fence_postsize, z-fence.fence_postsize_h, x-.5f, z-fence.fence_postsize_h, slat_start+fence.fence_top_slat_offset, fence.fence_slat_height, 8, 3, 0, 5);
+					this.renderHorizontal(textureId, x-fence.fence_postsize, z+fence.fence_postsize_h, x-.5f, z-fence.fence_postsize_h, slat_start+fence.fence_top_slat_offset, 2, 8, 14, 0, false);
+					this.renderHorizontal(textureId, x-fence.fence_postsize, z+fence.fence_postsize_h, x-.5f, z-fence.fence_postsize_h, slat_start+fence.fence_top_slat_offset+fence.fence_slat_height, 2, 8, 14, 0, false);
 				}
 			}
 		}
@@ -2475,16 +2477,16 @@ public abstract class Chunk {
 				if (adj_data == 0 || adj_data == 2)
 				{
 					// Bottom slat
-					this.renderVertical(textureId, x+fence_postsize, z+fence_postsize_h, x+.5f, z+fence_postsize_h, slat_start, fence_slat_height, 6, 3, 0, 5);
-					this.renderVertical(textureId, x+fence_postsize, z-fence_postsize_h, x+.5f, z-fence_postsize_h, slat_start, fence_slat_height, 6, 3, 0, 5);
-					this.renderHorizontal(textureId, x+fence_postsize, z+fence_postsize_h, x+.5f, z-fence_postsize_h, slat_start, 2, 6, 14, 0, false);
-					this.renderHorizontal(textureId, x+fence_postsize, z+fence_postsize_h, x+.5f, z-fence_postsize_h, slat_start+fence_slat_height, 2, 6, 14, 0, false);
+					this.renderVertical(textureId, x+fence.fence_postsize, z+fence.fence_postsize_h, x+.5f, z+fence.fence_postsize_h, slat_start, fence.fence_slat_height, 6, 3, 0, 5);
+					this.renderVertical(textureId, x+fence.fence_postsize, z-fence.fence_postsize_h, x+.5f, z-fence.fence_postsize_h, slat_start, fence.fence_slat_height, 6, 3, 0, 5);
+					this.renderHorizontal(textureId, x+fence.fence_postsize, z+fence.fence_postsize_h, x+.5f, z-fence.fence_postsize_h, slat_start, 2, 6, 14, 0, false);
+					this.renderHorizontal(textureId, x+fence.fence_postsize, z+fence.fence_postsize_h, x+.5f, z-fence.fence_postsize_h, slat_start+fence.fence_slat_height, 2, 6, 14, 0, false);
 
 					// Top slat
-					this.renderVertical(textureId, x+fence_postsize, z+fence_postsize_h, x+.5f, z+fence_postsize_h, slat_start+fence_top_slat_offset, fence_slat_height, 8, 3, 0, 5);
-					this.renderVertical(textureId, x+fence_postsize, z-fence_postsize_h, x+.5f, z-fence_postsize_h, slat_start+fence_top_slat_offset, fence_slat_height, 8, 3, 0, 5);
-					this.renderHorizontal(textureId, x+fence_postsize, z+fence_postsize_h, x+.5f, z-fence_postsize_h, slat_start+fence_top_slat_offset, 2, 8, 14, 0, false);
-					this.renderHorizontal(textureId, x+fence_postsize, z+fence_postsize_h, x+.5f, z-fence_postsize_h, slat_start+fence_top_slat_offset+fence_slat_height, 2, 8, 14, 0, false);
+					this.renderVertical(textureId, x+fence.fence_postsize, z+fence.fence_postsize_h, x+.5f, z+fence.fence_postsize_h, slat_start+fence.fence_top_slat_offset, fence.fence_slat_height, 8, 3, 0, 5);
+					this.renderVertical(textureId, x+fence.fence_postsize, z-fence.fence_postsize_h, x+.5f, z-fence.fence_postsize_h, slat_start+fence.fence_top_slat_offset, fence.fence_slat_height, 8, 3, 0, 5);
+					this.renderHorizontal(textureId, x+fence.fence_postsize, z+fence.fence_postsize_h, x+.5f, z-fence.fence_postsize_h, slat_start+fence.fence_top_slat_offset, 2, 8, 14, 0, false);
+					this.renderHorizontal(textureId, x+fence.fence_postsize, z+fence.fence_postsize_h, x+.5f, z-fence.fence_postsize_h, slat_start+fence.fence_top_slat_offset+fence.fence_slat_height, 2, 8, 14, 0, false);
 				}
 			}
 		}
@@ -2493,16 +2495,16 @@ public abstract class Chunk {
 			// Solid block to the East
 
 			// Bottom slat
-			this.renderVertical(textureId, x+fence_postsize, z+fence_postsize_h, x+.5f, z+fence_postsize_h, slat_start, fence_slat_height, 6, 3, 0, 5);
-			this.renderVertical(textureId, x+fence_postsize, z-fence_postsize_h, x+.5f, z-fence_postsize_h, slat_start, fence_slat_height, 6, 3, 0, 5);
-			this.renderHorizontal(textureId, x+fence_postsize, z+fence_postsize_h, x+.5f, z-fence_postsize_h, slat_start, 2, 6, 14, 0, false);
-			this.renderHorizontal(textureId, x+fence_postsize, z+fence_postsize_h, x+.5f, z-fence_postsize_h, slat_start+fence_slat_height, 2, 6, 14, 0, false);
+			this.renderVertical(textureId, x+fence.fence_postsize, z+fence.fence_postsize_h, x+.5f, z+fence.fence_postsize_h, slat_start, fence.fence_slat_height, 6, 3, 0, 5);
+			this.renderVertical(textureId, x+fence.fence_postsize, z-fence.fence_postsize_h, x+.5f, z-fence.fence_postsize_h, slat_start, fence.fence_slat_height, 6, 3, 0, 5);
+			this.renderHorizontal(textureId, x+fence.fence_postsize, z+fence.fence_postsize_h, x+.5f, z-fence.fence_postsize_h, slat_start, 2, 6, 14, 0, false);
+			this.renderHorizontal(textureId, x+fence.fence_postsize, z+fence.fence_postsize_h, x+.5f, z-fence.fence_postsize_h, slat_start+fence.fence_slat_height, 2, 6, 14, 0, false);
 
 			// Top slat
-			this.renderVertical(textureId, x+fence_postsize, z+fence_postsize_h, x+.5f, z+fence_postsize_h, slat_start+fence_top_slat_offset, fence_slat_height, 6, 3, 0, 5);
-			this.renderVertical(textureId, x+fence_postsize, z-fence_postsize_h, x+.5f, z-fence_postsize_h, slat_start+fence_top_slat_offset, fence_slat_height, 6, 3, 0, 5);
-			this.renderHorizontal(textureId, x+fence_postsize, z+fence_postsize_h, x+.5f, z-fence_postsize_h, slat_start+fence_top_slat_offset, 2, 6, 14, 0, false);
-			this.renderHorizontal(textureId, x+fence_postsize, z+fence_postsize_h, x+.5f, z-fence_postsize_h, slat_start+fence_top_slat_offset+fence_slat_height, 2, 6, 14, 0, false);
+			this.renderVertical(textureId, x+fence.fence_postsize, z+fence.fence_postsize_h, x+.5f, z+fence.fence_postsize_h, slat_start+fence.fence_top_slat_offset, fence.fence_slat_height, 6, 3, 0, 5);
+			this.renderVertical(textureId, x+fence.fence_postsize, z-fence.fence_postsize_h, x+.5f, z-fence.fence_postsize_h, slat_start+fence.fence_top_slat_offset, fence.fence_slat_height, 6, 3, 0, 5);
+			this.renderHorizontal(textureId, x+fence.fence_postsize, z+fence.fence_postsize_h, x+.5f, z-fence.fence_postsize_h, slat_start+fence.fence_top_slat_offset, 2, 6, 14, 0, false);
+			this.renderHorizontal(textureId, x+fence.fence_postsize, z+fence.fence_postsize_h, x+.5f, z-fence.fence_postsize_h, slat_start+fence.fence_top_slat_offset+fence.fence_slat_height, 2, 6, 14, 0, false);
 		}
 		
 		// Check for adjacent fences / fence gates in the -z direction
@@ -2510,32 +2512,32 @@ public abstract class Chunk {
 		if (adj_id == blockId)
 		{
 			// Bottom slat
-			this.renderVertical(textureId, x+fence_postsize_h, z-fence_postsize, x+fence_postsize_h, z-1f+fence_postsize, slat_start, fence_slat_height, 12, 3, 2, 5);
-			this.renderVertical(textureId, x-fence_postsize_h, z-fence_postsize, x-fence_postsize_h, z-1f+fence_postsize, slat_start, fence_slat_height, 12, 3, 2, 5);
-			this.renderHorizontal(textureId, x+fence_postsize_h, z-fence_postsize, x-fence_postsize_h, z-1f+fence_postsize, slat_start, 2, 12, 14, 2, true);
-			this.renderHorizontal(textureId, x+fence_postsize_h, z-fence_postsize, x-fence_postsize_h, z-1f+fence_postsize, slat_start+fence_slat_height, 2, 12, 14, 2, true);
+			this.renderVertical(textureId, x+fence.fence_postsize_h, z-fence.fence_postsize, x+fence.fence_postsize_h, z-1f+fence.fence_postsize, slat_start, fence.fence_slat_height, 12, 3, 2, 5);
+			this.renderVertical(textureId, x-fence.fence_postsize_h, z-fence.fence_postsize, x-fence.fence_postsize_h, z-1f+fence.fence_postsize, slat_start, fence.fence_slat_height, 12, 3, 2, 5);
+			this.renderHorizontal(textureId, x+fence.fence_postsize_h, z-fence.fence_postsize, x-fence.fence_postsize_h, z-1f+fence.fence_postsize, slat_start, 2, 12, 14, 2, true);
+			this.renderHorizontal(textureId, x+fence.fence_postsize_h, z-fence.fence_postsize, x-fence.fence_postsize_h, z-1f+fence.fence_postsize, slat_start+fence.fence_slat_height, 2, 12, 14, 2, true);
 
 			// Top slat
-			this.renderVertical(textureId, x+fence_postsize_h, z-fence_postsize, x+fence_postsize_h, z-1f+fence_postsize, slat_start+fence_top_slat_offset, fence_slat_height, 12, 3, 2, 5);
-			this.renderVertical(textureId, x-fence_postsize_h, z-fence_postsize, x-fence_postsize_h, z-1f+fence_postsize, slat_start+fence_top_slat_offset, fence_slat_height, 12, 3, 2, 5);
-			this.renderHorizontal(textureId, x+fence_postsize_h, z-fence_postsize, x-fence_postsize_h, z-1f+fence_postsize, slat_start+fence_top_slat_offset, 2, 12, 14, 2, true);
-			this.renderHorizontal(textureId, x+fence_postsize_h, z-fence_postsize, x-fence_postsize_h, z-1f+fence_postsize, slat_start+fence_top_slat_offset+fence_slat_height, 2, 12, 14, 2, true);
+			this.renderVertical(textureId, x+fence.fence_postsize_h, z-fence.fence_postsize, x+fence.fence_postsize_h, z-1f+fence.fence_postsize, slat_start+fence.fence_top_slat_offset, fence.fence_slat_height, 12, 3, 2, 5);
+			this.renderVertical(textureId, x-fence.fence_postsize_h, z-fence.fence_postsize, x-fence.fence_postsize_h, z-1f+fence.fence_postsize, slat_start+fence.fence_top_slat_offset, fence.fence_slat_height, 12, 3, 2, 5);
+			this.renderHorizontal(textureId, x+fence.fence_postsize_h, z-fence.fence_postsize, x-fence.fence_postsize_h, z-1f+fence.fence_postsize, slat_start+fence.fence_top_slat_offset, 2, 12, 14, 2, true);
+			this.renderHorizontal(textureId, x+fence.fence_postsize_h, z-fence.fence_postsize, x-fence.fence_postsize_h, z-1f+fence.fence_postsize, slat_start+fence.fence_top_slat_offset+fence.fence_slat_height, 2, 12, 14, 2, true);
 		}
 		else if (beta19_fences && this.isSolid(adj_id))
 		{
 			// Solid block to the North
 
 			// Bottom slat
-			this.renderVertical(textureId, x+fence_postsize_h, z-fence_postsize, x+fence_postsize_h, z-.5f, slat_start, fence_slat_height, 6, 3, 0, 5);
-			this.renderVertical(textureId, x-fence_postsize_h, z-fence_postsize, x-fence_postsize_h, z-.5f, slat_start, fence_slat_height, 6, 3, 0, 5);
-			this.renderHorizontal(textureId, x+fence_postsize_h, z-fence_postsize, x-fence_postsize_h, z-.5f, slat_start, 2, 6, 14, 0, true);
-			this.renderHorizontal(textureId, x+fence_postsize_h, z-fence_postsize, x-fence_postsize_h, z-.5f, slat_start+fence_slat_height, 2, 6, 14, 0, true);
+			this.renderVertical(textureId, x+fence.fence_postsize_h, z-fence.fence_postsize, x+fence.fence_postsize_h, z-.5f, slat_start, fence.fence_slat_height, 6, 3, 0, 5);
+			this.renderVertical(textureId, x-fence.fence_postsize_h, z-fence.fence_postsize, x-fence.fence_postsize_h, z-.5f, slat_start, fence.fence_slat_height, 6, 3, 0, 5);
+			this.renderHorizontal(textureId, x+fence.fence_postsize_h, z-fence.fence_postsize, x-fence.fence_postsize_h, z-.5f, slat_start, 2, 6, 14, 0, true);
+			this.renderHorizontal(textureId, x+fence.fence_postsize_h, z-fence.fence_postsize, x-fence.fence_postsize_h, z-.5f, slat_start+fence.fence_slat_height, 2, 6, 14, 0, true);
 
 			// Top slat
-			this.renderVertical(textureId, x+fence_postsize_h, z-fence_postsize, x+fence_postsize_h, z-.5f, slat_start+fence_top_slat_offset, fence_slat_height, 6, 3, 0, 5);
-			this.renderVertical(textureId, x-fence_postsize_h, z-fence_postsize, x-fence_postsize_h, z-.5f, slat_start+fence_top_slat_offset, fence_slat_height, 6, 3, 0, 5);
-			this.renderHorizontal(textureId, x+fence_postsize_h, z-fence_postsize, x-fence_postsize_h, z-.5f, slat_start+fence_top_slat_offset, 2, 6, 14, 0, true);
-			this.renderHorizontal(textureId, x+fence_postsize_h, z-fence_postsize, x-fence_postsize_h, z-.5f, slat_start+fence_top_slat_offset+fence_slat_height, 2, 6, 14, 0, true);
+			this.renderVertical(textureId, x+fence.fence_postsize_h, z-fence.fence_postsize, x+fence.fence_postsize_h, z-.5f, slat_start+fence.fence_top_slat_offset, fence.fence_slat_height, 6, 3, 0, 5);
+			this.renderVertical(textureId, x-fence.fence_postsize_h, z-fence.fence_postsize, x-fence.fence_postsize_h, z-.5f, slat_start+fence.fence_top_slat_offset, fence.fence_slat_height, 6, 3, 0, 5);
+			this.renderHorizontal(textureId, x+fence.fence_postsize_h, z-fence.fence_postsize, x-fence.fence_postsize_h, z-.5f, slat_start+fence.fence_top_slat_offset, 2, 6, 14, 0, true);
+			this.renderHorizontal(textureId, x+fence.fence_postsize_h, z-fence.fence_postsize, x-fence.fence_postsize_h, z-.5f, slat_start+fence.fence_top_slat_offset+fence.fence_slat_height, 2, 6, 14, 0, true);
 		}
 		else if (adj_id > -1 && blockArray[adj_id] != null && blockArray[adj_id].type == BLOCK_TYPE.FENCE_GATE)
 		{
@@ -2547,16 +2549,16 @@ public abstract class Chunk {
 				if (adj_data == 1 || adj_data == 3)
 				{
 					// Bottom slat
-					this.renderVertical(textureId, x+fence_postsize_h, z-fence_postsize, x+fence_postsize_h, z-.5f, slat_start, fence_slat_height, 6, 3, 0, 5);
-					this.renderVertical(textureId, x-fence_postsize_h, z-fence_postsize, x-fence_postsize_h, z-.5f, slat_start, fence_slat_height, 6, 3, 0, 5);
-					this.renderHorizontal(textureId, x+fence_postsize_h, z-fence_postsize, x-fence_postsize_h, z-.5f, slat_start, 2, 6, 14, 0, true);
-					this.renderHorizontal(textureId, x+fence_postsize_h, z-fence_postsize, x-fence_postsize_h, z-.5f, slat_start+fence_slat_height, 2, 6, 14, 0, true);
+					this.renderVertical(textureId, x+fence.fence_postsize_h, z-fence.fence_postsize, x+fence.fence_postsize_h, z-.5f, slat_start, fence.fence_slat_height, 6, 3, 0, 5);
+					this.renderVertical(textureId, x-fence.fence_postsize_h, z-fence.fence_postsize, x-fence.fence_postsize_h, z-.5f, slat_start, fence.fence_slat_height, 6, 3, 0, 5);
+					this.renderHorizontal(textureId, x+fence.fence_postsize_h, z-fence.fence_postsize, x-fence.fence_postsize_h, z-.5f, slat_start, 2, 6, 14, 0, true);
+					this.renderHorizontal(textureId, x+fence.fence_postsize_h, z-fence.fence_postsize, x-fence.fence_postsize_h, z-.5f, slat_start+fence.fence_slat_height, 2, 6, 14, 0, true);
 
 					// Top slat
-					this.renderVertical(textureId, x+fence_postsize_h, z-fence_postsize, x+fence_postsize_h, z-.5f, slat_start+fence_top_slat_offset, fence_slat_height, 6, 3, 0, 5);
-					this.renderVertical(textureId, x-fence_postsize_h, z-fence_postsize, x-fence_postsize_h, z-.5f, slat_start+fence_top_slat_offset, fence_slat_height, 6, 3, 0, 5);
-					this.renderHorizontal(textureId, x+fence_postsize_h, z-fence_postsize, x-fence_postsize_h, z-.5f, slat_start+fence_top_slat_offset, 2, 6, 14, 0, true);
-					this.renderHorizontal(textureId, x+fence_postsize_h, z-fence_postsize, x-fence_postsize_h, z-.5f, slat_start+fence_top_slat_offset+fence_slat_height, 2, 6, 14, 0, true);
+					this.renderVertical(textureId, x+fence.fence_postsize_h, z-fence.fence_postsize, x+fence.fence_postsize_h, z-.5f, slat_start+fence.fence_top_slat_offset, fence.fence_slat_height, 6, 3, 0, 5);
+					this.renderVertical(textureId, x-fence.fence_postsize_h, z-fence.fence_postsize, x-fence.fence_postsize_h, z-.5f, slat_start+fence.fence_top_slat_offset, fence.fence_slat_height, 6, 3, 0, 5);
+					this.renderHorizontal(textureId, x+fence.fence_postsize_h, z-fence.fence_postsize, x-fence.fence_postsize_h, z-.5f, slat_start+fence.fence_top_slat_offset, 2, 6, 14, 0, true);
+					this.renderHorizontal(textureId, x+fence.fence_postsize_h, z-fence.fence_postsize, x-fence.fence_postsize_h, z-.5f, slat_start+fence.fence_top_slat_offset+fence.fence_slat_height, 2, 6, 14, 0, true);
 				}
 			}
 		}
@@ -2573,16 +2575,16 @@ public abstract class Chunk {
 				if (adj_data == 1 || adj_data == 3)
 				{
 					// Bottom slat
-					this.renderVertical(textureId, x+fence_postsize_h, z+fence_postsize, x+fence_postsize_h, z+.5f, slat_start, fence_slat_height, 6, 3, 0, 5);
-					this.renderVertical(textureId, x-fence_postsize_h, z+fence_postsize, x-fence_postsize_h, z+.5f, slat_start, fence_slat_height, 6, 3, 0, 5);
-					this.renderHorizontal(textureId, x+fence_postsize_h, z+fence_postsize, x-fence_postsize_h, z+.5f, slat_start, 2, 6, 14, 0, true);
-					this.renderHorizontal(textureId, x+fence_postsize_h, z+fence_postsize, x-fence_postsize_h, z+.5f, slat_start+fence_slat_height, 2, 6, 14, 0, true);
+					this.renderVertical(textureId, x+fence.fence_postsize_h, z+fence.fence_postsize, x+fence.fence_postsize_h, z+.5f, slat_start, fence.fence_slat_height, 6, 3, 0, 5);
+					this.renderVertical(textureId, x-fence.fence_postsize_h, z+fence.fence_postsize, x-fence.fence_postsize_h, z+.5f, slat_start, fence.fence_slat_height, 6, 3, 0, 5);
+					this.renderHorizontal(textureId, x+fence.fence_postsize_h, z+fence.fence_postsize, x-fence.fence_postsize_h, z+.5f, slat_start, 2, 6, 14, 0, true);
+					this.renderHorizontal(textureId, x+fence.fence_postsize_h, z+fence.fence_postsize, x-fence.fence_postsize_h, z+.5f, slat_start+fence.fence_slat_height, 2, 6, 14, 0, true);
 
 					// Top slat
-					this.renderVertical(textureId, x+fence_postsize_h, z+fence_postsize, x+fence_postsize_h, z+.5f, slat_start+fence_top_slat_offset, fence_slat_height, 6, 3, 0, 5);
-					this.renderVertical(textureId, x-fence_postsize_h, z+fence_postsize, x-fence_postsize_h, z+.5f, slat_start+fence_top_slat_offset, fence_slat_height, 6, 3, 0, 5);
-					this.renderHorizontal(textureId, x+fence_postsize_h, z+fence_postsize, x-fence_postsize_h, z+.5f, slat_start+fence_top_slat_offset, 2, 6, 14, 0, true);
-					this.renderHorizontal(textureId, x+fence_postsize_h, z+fence_postsize, x-fence_postsize_h, z+.5f, slat_start+fence_top_slat_offset+fence_slat_height, 2, 6, 14, 0, true);
+					this.renderVertical(textureId, x+fence.fence_postsize_h, z+fence.fence_postsize, x+fence.fence_postsize_h, z+.5f, slat_start+fence.fence_top_slat_offset, fence.fence_slat_height, 6, 3, 0, 5);
+					this.renderVertical(textureId, x-fence.fence_postsize_h, z+fence.fence_postsize, x-fence.fence_postsize_h, z+.5f, slat_start+fence.fence_top_slat_offset, fence.fence_slat_height, 6, 3, 0, 5);
+					this.renderHorizontal(textureId, x+fence.fence_postsize_h, z+fence.fence_postsize, x-fence.fence_postsize_h, z+.5f, slat_start+fence.fence_top_slat_offset, 2, 6, 14, 0, true);
+					this.renderHorizontal(textureId, x+fence.fence_postsize_h, z+fence.fence_postsize, x-fence.fence_postsize_h, z+.5f, slat_start+fence.fence_top_slat_offset+fence.fence_slat_height, 2, 6, 14, 0, true);
 				}
 			}
 		}
@@ -2591,19 +2593,19 @@ public abstract class Chunk {
 			// Solid block to the South
 
 			// Bottom slat
-			this.renderVertical(textureId, x+fence_postsize_h, z+fence_postsize, x+fence_postsize_h, z+.5f, slat_start, fence_slat_height, 6, 3, 0, 5);
-			this.renderVertical(textureId, x-fence_postsize_h, z+fence_postsize, x-fence_postsize_h, z+.5f, slat_start, fence_slat_height, 6, 3, 0, 5);
-			this.renderHorizontal(textureId, x+fence_postsize_h, z+fence_postsize, x-fence_postsize_h, z+.5f, slat_start, 2, 6, 14, 0, true);
-			this.renderHorizontal(textureId, x+fence_postsize_h, z+fence_postsize, x-fence_postsize_h, z+.5f, slat_start+fence_slat_height, 2, 6, 14, 0, true);
+			this.renderVertical(textureId, x+fence.fence_postsize_h, z+fence.fence_postsize, x+fence.fence_postsize_h, z+.5f, slat_start, fence.fence_slat_height, 6, 3, 0, 5);
+			this.renderVertical(textureId, x-fence.fence_postsize_h, z+fence.fence_postsize, x-fence.fence_postsize_h, z+.5f, slat_start, fence.fence_slat_height, 6, 3, 0, 5);
+			this.renderHorizontal(textureId, x+fence.fence_postsize_h, z+fence.fence_postsize, x-fence.fence_postsize_h, z+.5f, slat_start, 2, 6, 14, 0, true);
+			this.renderHorizontal(textureId, x+fence.fence_postsize_h, z+fence.fence_postsize, x-fence.fence_postsize_h, z+.5f, slat_start+fence.fence_slat_height, 2, 6, 14, 0, true);
 
 			// Top slat
-			this.renderVertical(textureId, x+fence_postsize_h, z+fence_postsize, x+fence_postsize_h, z+.5f, slat_start+fence_top_slat_offset, fence_slat_height, 6, 3, 0, 5);
-			this.renderVertical(textureId, x-fence_postsize_h, z+fence_postsize, x-fence_postsize_h, z+.5f, slat_start+fence_top_slat_offset, fence_slat_height, 6, 3, 0, 5);
-			this.renderHorizontal(textureId, x+fence_postsize_h, z+fence_postsize, x-fence_postsize_h, z+.5f, slat_start+fence_top_slat_offset, 2, 6, 14, 0, true);
-			this.renderHorizontal(textureId, x+fence_postsize_h, z+fence_postsize, x-fence_postsize_h, z+.5f, slat_start+fence_top_slat_offset+fence_slat_height, 2, 6, 14, 0, true);
+			this.renderVertical(textureId, x+fence.fence_postsize_h, z+fence.fence_postsize, x+fence.fence_postsize_h, z+.5f, slat_start+fence.fence_top_slat_offset, fence.fence_slat_height, 6, 3, 0, 5);
+			this.renderVertical(textureId, x-fence.fence_postsize_h, z+fence.fence_postsize, x-fence.fence_postsize_h, z+.5f, slat_start+fence.fence_top_slat_offset, fence.fence_slat_height, 6, 3, 0, 5);
+			this.renderHorizontal(textureId, x+fence.fence_postsize_h, z+fence.fence_postsize, x-fence.fence_postsize_h, z+.5f, slat_start+fence.fence_top_slat_offset, 2, 6, 14, 0, true);
+			this.renderHorizontal(textureId, x+fence.fence_postsize_h, z+fence.fence_postsize, x-fence.fence_postsize_h, z+.5f, slat_start+fence.fence_top_slat_offset+fence.fence_slat_height, 2, 6, 14, 0, true);
 		}
 	}
-	
+
 	/**
 	 * Renders a fence gate.  Good lord, this is a heck of a function.   I continually feel like I'm
 	 * going about these things in the wrong way.  Ah, well - it works.
@@ -2627,8 +2629,8 @@ public abstract class Chunk {
 		float post_y_start = -.1875f;
 		float post_h = .6875f;
 		float middle_w = .125f;
-		float middle_y = fence_slat_start_offset + fence_slat_height;
-		float middle_h = fence_slat_start_offset + fence_top_slat_offset - middle_y;
+		float middle_y = fence.fence_slat_start_offset + fence.fence_slat_height;
+		float middle_h = fence.fence_slat_start_offset + fence.fence_top_slat_offset - middle_y;
 		float middle_width = .0625f;
 		float open_gate = .4375f;
 
@@ -2675,54 +2677,54 @@ public abstract class Chunk {
 		if (open)
 		{
 			// One side, bottom slat
-			this.renderVertical(textureId, post_x1, post_z, post_x1, open_gate, fence_slat_start_offset, fence_slat_height, 6, 3, 5, 7);
-			this.renderVertical(textureId, post_x2, post_z, post_x2, open_gate, fence_slat_start_offset, fence_slat_height, 6, 3, 5, 7);
-			this.renderHorizontal(textureId, post_x1, post_z, post_x2, open_gate, fence_slat_start_offset, 6, 2, 5, 7, true);
-			this.renderHorizontal(textureId, post_x1, post_z, post_x2, open_gate, fence_slat_start_offset+fence_slat_height, 6, 2, 5, 7, false);
+			this.renderVertical(textureId, post_x1, post_z, post_x1, open_gate, fence.fence_slat_start_offset, fence.fence_slat_height, 6, 3, 5, 7);
+			this.renderVertical(textureId, post_x2, post_z, post_x2, open_gate, fence.fence_slat_start_offset, fence.fence_slat_height, 6, 3, 5, 7);
+			this.renderHorizontal(textureId, post_x1, post_z, post_x2, open_gate, fence.fence_slat_start_offset, 6, 2, 5, 7, true);
+			this.renderHorizontal(textureId, post_x1, post_z, post_x2, open_gate, fence.fence_slat_start_offset+fence.fence_slat_height, 6, 2, 5, 7, false);
 
 			// One side, top slat
-			this.renderVertical(textureId, post_x1, post_z, post_x1, open_gate, fence_slat_start_offset+fence_top_slat_offset, fence_slat_height, 6, 3, 5, 7);
-			this.renderVertical(textureId, post_x2, post_z, post_x2, open_gate, fence_slat_start_offset+fence_top_slat_offset, fence_slat_height, 6, 3, 5, 7);
-			this.renderHorizontal(textureId, post_x1, post_z, post_x2, open_gate, fence_slat_start_offset+fence_top_slat_offset, 6, 2, 5, 7, true);
-			this.renderHorizontal(textureId, post_x1, post_z, post_x2, open_gate, fence_slat_start_offset+fence_top_slat_offset+fence_slat_height, 6, 2, 5, 7, false);
+			this.renderVertical(textureId, post_x1, post_z, post_x1, open_gate, fence.fence_slat_start_offset+fence.fence_top_slat_offset, fence.fence_slat_height, 6, 3, 5, 7);
+			this.renderVertical(textureId, post_x2, post_z, post_x2, open_gate, fence.fence_slat_start_offset+fence.fence_top_slat_offset, fence.fence_slat_height, 6, 3, 5, 7);
+			this.renderHorizontal(textureId, post_x1, post_z, post_x2, open_gate, fence.fence_slat_start_offset+fence.fence_top_slat_offset, 6, 2, 5, 7, true);
+			this.renderHorizontal(textureId, post_x1, post_z, post_x2, open_gate, fence.fence_slat_start_offset+fence.fence_top_slat_offset+fence.fence_slat_height, 6, 2, 5, 7, false);
 
 			// One side, middle bit
 			this.renderVertical(textureId, post_x1, open_gate, post_x1, open_gate-middle_w, middle_y, middle_h, 2, 3, 7, 5);
 			this.renderVertical(textureId, post_x2, open_gate, post_x2, open_gate-middle_w, middle_y, middle_h, 2, 3, 7, 5);
 			this.renderVertical(textureId, post_x1, open_gate-middle_w, post_x2, open_gate-middle_w, middle_y, middle_h, 2, 3, 7, 5);
-			this.renderVertical(textureId, post_x1, open_gate, post_x2, open_gate, fence_slat_start_offset, fence_slat_height+fence_top_slat_offset, 2, 9, 7, 0);
+			this.renderVertical(textureId, post_x1, open_gate, post_x2, open_gate, fence.fence_slat_start_offset, fence.fence_slat_height+fence.fence_top_slat_offset, 2, 9, 7, 0);
 
 			// Other side, bottom slat
-			this.renderVertical(textureId, -post_x1, post_z, -post_x1, open_gate, fence_slat_start_offset, fence_slat_height, 6, 3, 5, 7);
-			this.renderVertical(textureId, -post_x2, post_z, -post_x2, open_gate, fence_slat_start_offset, fence_slat_height, 6, 3, 5, 7);
-			this.renderHorizontal(textureId, -post_x1, post_z, -post_x2, open_gate, fence_slat_start_offset, 6, 2, 5, 7, true);
-			this.renderHorizontal(textureId, -post_x1, post_z, -post_x2, open_gate, fence_slat_start_offset+fence_slat_height, 6, 2, 5, 7, false);
+			this.renderVertical(textureId, -post_x1, post_z, -post_x1, open_gate, fence.fence_slat_start_offset, fence.fence_slat_height, 6, 3, 5, 7);
+			this.renderVertical(textureId, -post_x2, post_z, -post_x2, open_gate, fence.fence_slat_start_offset, fence.fence_slat_height, 6, 3, 5, 7);
+			this.renderHorizontal(textureId, -post_x1, post_z, -post_x2, open_gate, fence.fence_slat_start_offset, 6, 2, 5, 7, true);
+			this.renderHorizontal(textureId, -post_x1, post_z, -post_x2, open_gate, fence.fence_slat_start_offset+fence.fence_slat_height, 6, 2, 5, 7, false);
 
 			// Other side, top slat
-			this.renderVertical(textureId, -post_x1, post_z, -post_x1, open_gate, fence_slat_start_offset+fence_top_slat_offset, fence_slat_height, 6, 3, 5, 7);
-			this.renderVertical(textureId, -post_x2, post_z, -post_x2, open_gate, fence_slat_start_offset+fence_top_slat_offset, fence_slat_height, 6, 3, 5, 7);
-			this.renderHorizontal(textureId, -post_x1, post_z, -post_x2, open_gate, fence_slat_start_offset+fence_top_slat_offset, 6, 2, 5, 7, true);
-			this.renderHorizontal(textureId, -post_x1, post_z, -post_x2, open_gate, fence_slat_start_offset+fence_top_slat_offset+fence_slat_height, 6, 2, 5, 7, false);
+			this.renderVertical(textureId, -post_x1, post_z, -post_x1, open_gate, fence.fence_slat_start_offset+fence.fence_top_slat_offset, fence.fence_slat_height, 6, 3, 5, 7);
+			this.renderVertical(textureId, -post_x2, post_z, -post_x2, open_gate, fence.fence_slat_start_offset+fence.fence_top_slat_offset, fence.fence_slat_height, 6, 3, 5, 7);
+			this.renderHorizontal(textureId, -post_x1, post_z, -post_x2, open_gate, fence.fence_slat_start_offset+fence.fence_top_slat_offset, 6, 2, 5, 7, true);
+			this.renderHorizontal(textureId, -post_x1, post_z, -post_x2, open_gate, fence.fence_slat_start_offset+fence.fence_top_slat_offset+fence.fence_slat_height, 6, 2, 5, 7, false);
 
 			// Other side, middle bit
 			this.renderVertical(textureId, -post_x1, open_gate, -post_x1, open_gate-middle_w, middle_y, middle_h, 2, 3, 7, 5);
 			this.renderVertical(textureId, -post_x2, open_gate, -post_x2, open_gate-middle_w, middle_y, middle_h, 2, 3, 7, 5);
 			this.renderVertical(textureId, -post_x1, open_gate-middle_w, -post_x2, open_gate-middle_w, middle_y, middle_h, 2, 3, 7, 5);
-			this.renderVertical(textureId, -post_x1, open_gate, -post_x2, open_gate, fence_slat_start_offset, fence_slat_height+fence_top_slat_offset, 2, 9, 7, 0);
+			this.renderVertical(textureId, -post_x1, open_gate, -post_x2, open_gate, fence.fence_slat_start_offset, fence.fence_slat_height+fence.fence_top_slat_offset, 2, 9, 7, 0);
 		}
 		else
 		{
 			// Bottom bar
-			this.renderVertical(textureId, post_x1, post_z, -post_x1, post_z, fence_slat_start_offset, fence_slat_height, 12, 3, 2, 7);
-			this.renderVertical(textureId, post_x1, -post_z, -post_x1, -post_z, fence_slat_start_offset, fence_slat_height, 12, 3, 2, 7);
-			this.renderHorizontal(textureId, post_x1, post_z, -post_x1, -post_z, fence_slat_start_offset, 12, 2, 2, 3, true);
-			this.renderHorizontal(textureId, post_x1, post_z, -post_x1, -post_z, fence_slat_start_offset+fence_slat_height, 12, 2, 2, 3, true);
+			this.renderVertical(textureId, post_x1, post_z, -post_x1, post_z, fence.fence_slat_start_offset, fence.fence_slat_height, 12, 3, 2, 7);
+			this.renderVertical(textureId, post_x1, -post_z, -post_x1, -post_z, fence.fence_slat_start_offset, fence.fence_slat_height, 12, 3, 2, 7);
+			this.renderHorizontal(textureId, post_x1, post_z, -post_x1, -post_z, fence.fence_slat_start_offset, 12, 2, 2, 3, true);
+			this.renderHorizontal(textureId, post_x1, post_z, -post_x1, -post_z, fence.fence_slat_start_offset+fence.fence_slat_height, 12, 2, 2, 3, true);
 
 			// Top bar
-			this.renderVertical(textureId, post_x1, post_z, -post_x1, post_z, fence_slat_start_offset+fence_top_slat_offset, fence_slat_height, 12, 3, 2, 7);
-			this.renderVertical(textureId, post_x1, -post_z, -post_x1, -post_z, fence_slat_start_offset+fence_top_slat_offset, fence_slat_height, 12, 3, 2, 7);
-			this.renderHorizontal(textureId, post_x1, post_z, -post_x1, -post_z, fence_slat_start_offset+fence_top_slat_offset, 12, 2, 2, 3, true);
-			this.renderHorizontal(textureId, post_x1, post_z, -post_x1, -post_z, fence_slat_start_offset+fence_top_slat_offset+fence_slat_height, 12, 2, 2, 3, true);
+			this.renderVertical(textureId, post_x1, post_z, -post_x1, post_z, fence.fence_slat_start_offset+fence.fence_top_slat_offset, fence.fence_slat_height, 12, 3, 2, 7);
+			this.renderVertical(textureId, post_x1, -post_z, -post_x1, -post_z, fence.fence_slat_start_offset+fence.fence_top_slat_offset, fence.fence_slat_height, 12, 3, 2, 7);
+			this.renderHorizontal(textureId, post_x1, post_z, -post_x1, -post_z, fence.fence_slat_start_offset+fence.fence_top_slat_offset, 12, 2, 2, 3, true);
+			this.renderHorizontal(textureId, post_x1, post_z, -post_x1, -post_z, fence.fence_slat_start_offset+fence.fence_top_slat_offset+fence.fence_slat_height, 12, 2, 2, 3, true);
 
 			// Middle bit
 			this.renderVertical(textureId, middle_w, post_z, -middle_w, post_z, middle_y, middle_h, 4, 3, 6, 5);
@@ -3773,8 +3775,8 @@ public abstract class Chunk {
 	 * @param xxx
 	 * @param yyy
 	 * @param zzz
-	 * @param blockOffset
-	 * @param blockId
+	 * param blockOffset
+	 * param blockId
 	 */
 	public void renderEndPortal(int textureId, int xxx, int yyy, int zzz) {
 		float x = xxx + this.x*16;
@@ -3792,7 +3794,7 @@ public abstract class Chunk {
 	 * @param yyy
 	 * @param zzz
 	 * @param blockOffset
-	 * @param blockId
+	 * param blockId
 	 */
 	public void renderEndPortalFrame(int textureId, int xxx, int yyy, int zzz, int blockOffset, BlockType block, int tex_offset) {
 		float x = xxx + this.x*16;

@@ -113,11 +113,12 @@ public class XRay
 
 	// Minimap size - I did try increasing this but there were some performance
 	// issues
-	private final int minimap_dim = 2048;
+	/*private final int minimap_dim = 2048;
 	private final float minimap_dim_f = (float) minimap_dim;
 	private final int minimap_dim_h = minimap_dim / 2;
 	private final float minimap_dim_h_f = (float) minimap_dim_h;
-	private boolean minimap_needs_updating = false;
+	private boolean minimap_needs_updating = false;*/
+	private Minimap minimap = new Minimap(false);
 
 	// current display mode
 	private DisplayMode displayMode;
@@ -277,7 +278,7 @@ public class XRay
 	private boolean renderSlimeChunks = false;
 
 	// Sphere vars
-	private boolean draw_sphere = false;
+	/*private boolean draw_sphere = false;
 	private boolean set_sphere_center = false;
 	private int draw_sphere_radius_min = 8;
 	private int draw_sphere_radius_max = 128;
@@ -285,7 +286,8 @@ public class XRay
 	private int draw_sphere_radius = draw_sphere_radius_min + (draw_sphere_radius_inc*2);
 	private float sphere_x = 0f;
 	private float sphere_y = 0f;
-	private float sphere_z = 0f;
+	private float sphere_z = 0f;*/
+	private XSphere sphere = new XSphere(false, false, 8, 128, 8, 0f, 0f, 0f);
 
 	// vars to keep track of our current chunk coordinates
 	private int cur_chunk_x = 0;
@@ -432,10 +434,10 @@ public class XRay
 				render(timeDelta);
 
 				// update our minimap if we need to (new chunks loaded, etc)
-				if (minimap_needs_updating)
+				if (minimap.minimap_needs_updating)
 				{
 					minimapTexture.update();
-					minimap_needs_updating = false;
+					minimap.minimap_needs_updating = false;
 				}
 
 				// Sleep a bit if we're not visible, to save on CPU
@@ -730,7 +732,7 @@ public class XRay
 			}
 
 			// Make sure we update the minimap
-			minimap_needs_updating = true;
+			minimap.minimap_needs_updating = true;
 
 			// Draw a progress bar if we're doing the initial load
 			if (!initial_load_done)
@@ -966,7 +968,7 @@ public class XRay
 	{
 		try
 		{
-			minimapTexture = TextureTool.allocateTexture(minimap_dim, minimap_dim);
+			minimapTexture = TextureTool.allocateTexture(minimap.minimap_dim, minimap.minimap_dim);
 			minimapGraphics = minimapTexture.getImage().createGraphics();
 			loadingTextTexture = TextureTool.allocateTexture(1024, 64);
 		}
@@ -1386,18 +1388,18 @@ public class XRay
 		{
 			// We have sphere data in our props file which applies to the world we're loading.
 			// So, do our stuff.
-			this.set_sphere_center = true;
-			this.draw_sphere = this.xray_properties.getBooleanProperty("STATE_SPHERE", true);
-			this.sphere_x = this.xray_properties.getFloatProperty("STATE_SPHERE_X", 0f);
-			this.sphere_y = this.xray_properties.getFloatProperty("STATE_SPHERE_Y", 0f);
-			this.sphere_z = this.xray_properties.getFloatProperty("STATE_SPHERE_Z", 0f);
-			this.draw_sphere_radius = this.xray_properties.getIntProperty("STATE_SPHERE_RADIUS",
-					this.draw_sphere_radius_min + (this.draw_sphere_radius_inc*2));
+			this.sphere.set_sphere_center = true;
+			this.sphere.draw_sphere = this.xray_properties.getBooleanProperty("STATE_SPHERE", true);
+			this.sphere.sphere_x = this.xray_properties.getFloatProperty("STATE_SPHERE_X", 0f);
+			this.sphere.sphere_y = this.xray_properties.getFloatProperty("STATE_SPHERE_Y", 0f);
+			this.sphere.sphere_z = this.xray_properties.getFloatProperty("STATE_SPHERE_Z", 0f);
+			this.sphere.draw_sphere_radius = this.xray_properties.getIntProperty("STATE_SPHERE_RADIUS",
+					this.sphere.draw_sphere_radius_min + (this.sphere.draw_sphere_radius_inc*2));
 
 			// Bounds checking on radius
-			if ((this.draw_sphere_radius % this.draw_sphere_radius_inc) != 0)
+			if ((this.sphere.draw_sphere_radius % this.sphere.draw_sphere_radius_inc) != 0)
 			{
-				this.draw_sphere_radius = (this.draw_sphere_radius / this.draw_sphere_radius_inc) * this.draw_sphere_radius_inc;
+				this.sphere.draw_sphere_radius = (this.sphere.draw_sphere_radius / this.sphere.draw_sphere_radius_inc) * this.sphere.draw_sphere_radius_inc;
 			}
 			this.changeSphereSize(0);
 		}
@@ -1405,9 +1407,9 @@ public class XRay
 		{
 			// Either we have no last-known data for sphere stuff, or this world doesn't
 			// apply.  Either way, reset our vars so we're not rendering a sphere.
-			this.set_sphere_center = false;
-			this.draw_sphere = false;
-			this.draw_sphere_radius = this.draw_sphere_radius_min + (this.draw_sphere_radius_inc*2);
+			this.sphere.set_sphere_center = false;
+			this.sphere.draw_sphere = false;
+			this.sphere.draw_sphere_radius = this.sphere.draw_sphere_radius_min + (this.sphere.draw_sphere_radius_inc*2);
 		}
 	}
 
@@ -1417,8 +1419,8 @@ public class XRay
 	 * that.
 	 * 
 	 * @param world
-	 * @param camera_x
-	 * @param camera_z
+	 * param camera_x
+	 * param camera_z
 	 */
 	private void setMinecraftWorld(WorldInfo world, FirstPersonCameraController camera)
 	{
@@ -2028,12 +2030,12 @@ public class XRay
 				}
 				else if (key == key_mapping.get(KEY_ACTION.SPHERE_SIZE_UP))
 				{
-					changeSphereSize(this.draw_sphere_radius_inc);
+					changeSphereSize(this.sphere.draw_sphere_radius_inc);
 					updateRenderDetails();
 				}
 				else if (key == key_mapping.get(KEY_ACTION.SPHERE_SIZE_DOWN))
 				{
-					changeSphereSize(-this.draw_sphere_radius_inc);
+					changeSphereSize(-this.sphere.draw_sphere_radius_inc);
 					updateRenderDetails();
 				}
 				else if (key == key_mapping.get(KEY_ACTION.SPHERE_SET))
@@ -2202,9 +2204,9 @@ public class XRay
 	 */
 	private void toggleSphere()
 	{
-		this.draw_sphere = !this.draw_sphere;
-		this.xray_properties.setBooleanProperty("STATE_SPHERE", this.draw_sphere);
-		if (this.draw_sphere && !this.set_sphere_center)
+		this.sphere.draw_sphere = !this.sphere.draw_sphere;
+		this.xray_properties.setBooleanProperty("STATE_SPHERE", this.sphere.draw_sphere);
+		if (this.sphere.draw_sphere && !this.sphere.set_sphere_center)
 		{
 			this.setSphereCenter();
 		}
@@ -2215,18 +2217,18 @@ public class XRay
 	 */
 	private void setSphereCenter()
 	{
-		this.sphere_x = -camera.getPosition().x;
-		this.sphere_y = -camera.getPosition().y;
-		this.sphere_z = -camera.getPosition().z;
-		this.set_sphere_center = true;
-		if (!this.draw_sphere)
+		this.sphere.sphere_x = -camera.getPosition().x;
+		this.sphere.sphere_y = -camera.getPosition().y;
+		this.sphere.sphere_z = -camera.getPosition().z;
+		this.sphere.set_sphere_center = true;
+		if (!this.sphere.draw_sphere)
 		{
 			this.toggleSphere();
 		}
 		this.xray_properties.setProperty("LAST_SPHERE_WORLD", this.world.getBasePath());
-		this.xray_properties.setFloatProperty("STATE_SPHERE_X", this.sphere_x);
-		this.xray_properties.setFloatProperty("STATE_SPHERE_Y", this.sphere_y);
-		this.xray_properties.setFloatProperty("STATE_SPHERE_Z", this.sphere_z);
+		this.xray_properties.setFloatProperty("STATE_SPHERE_X", this.sphere.sphere_x);
+		this.xray_properties.setFloatProperty("STATE_SPHERE_Y", this.sphere.sphere_y);
+		this.xray_properties.setFloatProperty("STATE_SPHERE_Z", this.sphere.sphere_z);
 	}
 
 	/**
@@ -2234,16 +2236,16 @@ public class XRay
 	 */
 	private void changeSphereSize(int increment)
 	{
-		this.draw_sphere_radius += increment;
-		if (this.draw_sphere_radius < this.draw_sphere_radius_min)
+		this.sphere.draw_sphere_radius += increment;
+		if (this.sphere.draw_sphere_radius < this.sphere.draw_sphere_radius_min)
 		{
-			this.draw_sphere_radius = this.draw_sphere_radius_min;
+			this.sphere.draw_sphere_radius = this.sphere.draw_sphere_radius_min;
 		}
-		else if (this.draw_sphere_radius > this.draw_sphere_radius_max)
+		else if (this.sphere.draw_sphere_radius > this.sphere.draw_sphere_radius_max)
 		{
-			this.draw_sphere_radius = this.draw_sphere_radius_max;
+			this.sphere.draw_sphere_radius = this.sphere.draw_sphere_radius_max;
 		}
-		this.xray_properties.setIntProperty("STATE_SPHERE_RADIUS", this.draw_sphere_radius);
+		this.xray_properties.setIntProperty("STATE_SPHERE_RADIUS", this.sphere.draw_sphere_radius);
 	}
 
 	/**
@@ -2413,7 +2415,7 @@ public class XRay
 
 		CameraPreset spawn = level.getSpawnPoint();
 		int sy = getMinimapBaseY(spawn.block.cz) + (spawn.block.x % 16);
-		int sx = (getMinimapBaseX(spawn.block.cx) + (spawn.block.z % 16)) % minimap_dim;
+		int sx = (getMinimapBaseX(spawn.block.cx) + (spawn.block.z % 16)) % minimap.minimap_dim;
 
 		g.setStroke(new BasicStroke(2));
 		g.setColor(Color.red.brighter());
@@ -2606,16 +2608,16 @@ public class XRay
 		}
 
 		// Now... A SPHERE?
-		if (this.draw_sphere)
+		if (this.sphere.draw_sphere)
 		{
 			GL11.glPushMatrix();
-			GL11.glTranslatef(this.sphere_x, this.sphere_y, this.sphere_z);
+			GL11.glTranslatef(this.sphere.sphere_x, this.sphere.sphere_y, this.sphere.sphere_z);
 			GL11.glDisable(GL11.GL_TEXTURE_2D);
 			Sphere mysphere = new Sphere();
 			GL11.glColor4f(.8f, .3f, .3f, .9f); 
 			mysphere.draw(.4f, 10, 10);
 			GL11.glColor4f(.4f, .4f, .8f, .6f); 
-			mysphere.draw((float)this.draw_sphere_radius, 20, 20);
+			mysphere.draw((float)this.sphere.draw_sphere_radius, 20, 20);
 			GL11.glEnable(GL11.GL_TEXTURE_2D);
 			GL11.glPopMatrix();
 		}
@@ -2927,10 +2929,10 @@ public class XRay
 			line_count++;
 			infoboxTextLabel(g, x_off, line_count * line_h, "Grass: ", Color.BLACK, DETAILFONT, "Inaccurate", Color.RED.darker(), DETAILVALUEFONT);
 		}
-		if (draw_sphere)
+		if (sphere.draw_sphere)
 		{
 			line_count++;
-			infoboxTextLabel(g, x_off, line_count * line_h, "Sphere Radius: ", Color.BLACK, DETAILFONT, Integer.toString(this.draw_sphere_radius), Color.GREEN.darker(), DETAILVALUEFONT);
+			infoboxTextLabel(g, x_off, line_count * line_h, "Sphere Radius: ", Color.BLACK, DETAILFONT, Integer.toString(this.sphere.draw_sphere_radius), Color.GREEN.darker(), DETAILVALUEFONT);
 		}
 		if (camera_lock)
 		{
@@ -3269,8 +3271,8 @@ public class XRay
 
 			float vSizeFactor = .5f;
 
-			float vTexX = (1.0f / minimap_dim_f) * currentCameraPosX;
-			float vTexY = (1.0f / minimap_dim_f) * currentCameraPosZ;
+			float vTexX = (1.0f / minimap.minimap_dim_f) * currentCameraPosX;
+			float vTexY = (1.0f / minimap.minimap_dim_f) * currentCameraPosZ;
 			float vTexZ = vSizeFactor;
 
 			GL11.glColor4f(1.0f, 1.0f, 1.0f, 0.7f);
@@ -3279,16 +3281,16 @@ public class XRay
 			GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
 
 			GL11.glTexCoord2f(vTexX - vTexZ, vTexY - vTexZ);
-			GL11.glVertex2f(-minimap_dim_h_f, -minimap_dim_h_f);
+			GL11.glVertex2f(-minimap.minimap_dim_h_f, -minimap.minimap_dim_h_f);
 
 			GL11.glTexCoord2f(vTexX + vTexZ, vTexY - vTexZ);
-			GL11.glVertex2f(+minimap_dim_h_f, -minimap_dim_h_f);
+			GL11.glVertex2f(+minimap.minimap_dim_h_f, -minimap.minimap_dim_h_f);
 
 			GL11.glTexCoord2f(vTexX - vTexZ, vTexY + vTexZ);
-			GL11.glVertex2f(-minimap_dim_h_f, +minimap_dim_h_f);
+			GL11.glVertex2f(-minimap.minimap_dim_h_f, +minimap.minimap_dim_h_f);
 
 			GL11.glTexCoord2f(vTexX + vTexZ, vTexY + vTexZ);
-			GL11.glVertex2f(+minimap_dim_h_f, +minimap_dim_h_f);
+			GL11.glVertex2f(+minimap.minimap_dim_h_f, +minimap.minimap_dim_h_f);
 
 			GL11.glEnd();
 			GL11.glPopMatrix();
@@ -3306,10 +3308,10 @@ public class XRay
 			// textures (via glTexParameter), we don't have to worry about checking
 			// bounds here, etc. Or in other words, our map will automatically wrap for
 			// us. Sweet!
-			float vSizeFactor = 200.0f / minimap_dim_f;
+			float vSizeFactor = 200.0f / minimap.minimap_dim_f;
 
-			float vTexX = (1.0f / minimap_dim_f) * currentCameraPosX;
-			float vTexY = (1.0f / minimap_dim_f) * currentCameraPosZ;
+			float vTexX = (1.0f / minimap.minimap_dim_f) * currentCameraPosX;
+			float vTexY = (1.0f / minimap.minimap_dim_f) * currentCameraPosZ;
 			float vTexZ = vSizeFactor;
 
 			minimapTexture.bind();
@@ -3347,12 +3349,12 @@ public class XRay
 	 * and Z increases to the South (decreasing to the North).  This is much nicer
 	 * to deal with then the way we were pretending things worked previously.
 	 * 
-	 * @param chunkZ
+	 * param chunkZ
 	 * @return
 	 */
 	private int getMinimapBaseX(int chunkX)
 	{
-		return (((chunkX*16) % minimap_dim) + minimap_dim) % minimap_dim;
+		return (((chunkX*16) % minimap.minimap_dim) + minimap.minimap_dim) % minimap.minimap_dim;
 	}
 
 	/**
@@ -3368,7 +3370,7 @@ public class XRay
 	 */
 	private int getMinimapBaseY(int chunkZ)
 	{
-		return (((chunkZ*16) % minimap_dim) + minimap_dim) % minimap_dim;
+		return (((chunkZ*16) % minimap.minimap_dim) + minimap.minimap_dim) % minimap.minimap_dim;
 	}
 
 	/**
