@@ -4213,368 +4213,358 @@ public abstract class Chunk {
 					}
 
 					// Now process the actual drawing
-					switch(block.type)
+					renderBlockType(block, textureId, tex_offset, t, facingPass);
+				}
+			}
+		}
+	}
+
+	public void renderBlockType(BlockType block, int textureId, int tex_offset, short t, FACING facingPass){
+		switch (block.type){
+			case TORCH:
+				renderTorch(textureId,this.l.x,this.l.y,this.l.z);
+				break;
+			case DECORATION_CROSS:
+				renderCrossDecoration(textureId,this.l.x,this.l.y,this.l.z);
+				break;
+			case DECORATION_GRID:
+				renderGridDecoration(textureId,this.l.x,this.l.y,this.l.z);
+				break;
+			case LADDER:
+				renderLadder(textureId,this.l.x,this.l.y,this.l.z);
+				break;
+			case FLOOR:
+				renderFloor(textureId,this.l.x,this.l.y,this.l.z);
+				break;
+			case MINECART_TRACKS:
+				renderMinecartTracks(textureId,this.l.x,this.l.y,this.l.z,block,tex_offset);
+				break;
+			case SIMPLE_RAIL:
+				renderSimpleRail(textureId,this.l.x,this.l.y,this.l.z,block,tex_offset);
+				break;
+			case PRESSURE_PLATE:
+				renderPlate(textureId,this.l.x,this.l.y,this.l.z);
+				break;
+			case DOOR:
+				renderDoor(textureId,this.l.x,this.l.y,this.l.z,block,tex_offset);
+				break;
+			case STAIRS:
+				renderStairs(textureId,this.l.x,this.l.y,this.l.z,this.lOffset);
+				break;
+			case SIGNPOST:
+				renderSignpost(textureId,this.l.x,this.l.y,this.l.z);
+				break;
+			case WALLSIGN:
+				renderWallSign(textureId,this.l.x,this.l.y,this.l.z);
+				break;
+			case FENCE:
+				renderFence(textureId,this.l.x,this.l.y,this.l.z,this.lOffset,t);
+				break;
+			case FENCE_GATE:
+				renderFenceGate(textureId,this.l.x,this.l.y,this.l.z,this.lOffset);
+				break;
+			case LEVER:
+				renderLever(textureId,this.l.x,this.l.y,this.l.z,block,tex_offset);
+				break;
+			case BUTTON:
+				renderButton(textureId,this.l.x,this.l.y,this.l.z);
+				break;
+			case PORTAL:
+				renderPortal(textureId,this.l.x,this.l.y,this.l.z,this.lOffset,t);
+				break;
+			case SNOW:
+				renderSnow(textureId,this.l.x,this.l.y,this.l.z,this.lOffset,t);
+				break;
+			case BED:
+				renderBed(textureId,this.l.x,this.l.y,this.l.z,block,tex_offset);
+				break;
+			case TRAPDOOR:
+				renderTrapdoor(textureId,this.l.x,this.l.y,this.l.z);
+				break;
+			case PISTON_BODY:
+				renderPistonBody(textureId,this.l.x,this.l.y,this.l.z,block,tex_offset);
+				break;
+			case PISTON_HEAD:
+				renderPistonHead(textureId,this.l.x,this.l.y,this.l.z,block,tex_offset,false,false);
+				break;
+			case CAKE:
+				renderCake(textureId,this.l.x,this.l.y,this.l.z,block,tex_offset);
+				break;
+			case VINE:
+				renderVine(textureId,this.l.x,this.l.y,this.l.z,this.lOffset);
+				break;
+			case SOLID_PANE:
+				renderSolidPane(textureId,this.l.x,this.l.y,this.l.z,this.lOffset,t);
+				break;
+			case CHEST:
+				renderChest(textureId,this.l.x,this.l.y,this.l.z,this.lOffset,block,tex_offset);
+				break;
+			case STEM:
+				renderStem(textureId,this.l.x,this.l.y,this.l.z,this.lOffset,block,tex_offset);
+				break;
+			case HALFHEIGHT:
+				renderHalfHeight(textureId,this.l.x,this.l.y,this.l.z,this.lOffset);
+				break;
+			case CAULDRON:
+				renderCauldron(textureId,this.l.x,this.l.y,this.l.z,this.lOffset,block,tex_offset);
+				break;
+			case ENCHANTMENT_TABLE:
+				renderEnchantmentTable(textureId,this.l.x,this.l.y,this.l.z,this.lOffset,block,tex_offset);
+				break;
+			case BREWING_STAND:
+				renderBrewingStand(textureId,this.l.x,this.l.y,this.l.z,block,tex_offset);
+				break;
+			case SEMISOLID:
+			case WATER:
+			case GLASS:
+				renderSemisolid(textureId,this.l.x,this.l.y,this.l.z,this.lOffset,t);
+				break;
+			case END_PORTAL:
+				renderEndPortal(textureId,this.l.x,this.l.y,this.l.z);
+				break;
+			case END_PORTAL_FRAME:
+				renderEndPortalFrame(textureId,this.l.x,this.l.y,this.l.z,this.lOffset,block,tex_offset);
+				break;
+			case DRAGON_EGG:
+				renderDragonEgg(textureId,this.l.x,this.l.y,this.l.z);
+				break;
+
+			case NORMAL:
+			case HUGE_MUSHROOM:
+			default:
+				renderBlockTypeDefault(block, textureId, tex_offset, t, facingPass);
+				break;
+		}
+	}
+
+	public void renderBlockTypeDefault(BlockType block, int textureId, int tex_offset, short t, FACING facingPass){
+		int north_t = textureId;
+		int south_t = textureId;
+		int west_t = textureId;
+		int east_t = textureId;
+		int top_t = textureId;
+		int bottom_t = textureId;
+		byte data;
+		// Huge Mushrooms are special-case since keeping the data in YAML seemed
+		// like far too much work at the time. Keeping them there does technically
+		// make more sense, so we should do that eventually.
+		// TODO: That ^
+		if (block.type == BLOCK_TYPE.HUGE_MUSHROOM)
+		{
+			int TEX_HUGE_MUSHROOM_PORES = block.texture_extra_map.get("pores");
+			int TEX_HUGE_MUSHROOM_STEM = block.texture_extra_map.get("stem");
+			data = getData(this.l.x, this.l.y, this.l.z);
+			switch (data)
+			{
+				case 0:
+					west_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					east_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					south_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					north_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					top_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					bottom_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					break;
+				case 1:
+					east_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					south_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					bottom_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					break;
+				case 2:
+					west_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					east_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					south_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					bottom_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					break;
+				case 3:
+					west_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					south_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					bottom_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					break;
+				case 4:
+					east_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					south_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					north_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					bottom_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					break;
+				case 5:
+					west_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					east_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					south_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					north_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					bottom_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					break;
+				case 6:
+					west_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					south_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					north_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					bottom_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					break;
+				case 7:
+					east_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					north_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					bottom_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					break;
+				case 8:
+					west_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					east_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					north_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					bottom_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					break;
+				case 9:
+					west_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					north_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					bottom_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					break;
+				case 10:
+					west_t = TEX_HUGE_MUSHROOM_STEM + tex_offset;
+					east_t = TEX_HUGE_MUSHROOM_STEM + tex_offset;
+					south_t = TEX_HUGE_MUSHROOM_STEM + tex_offset;
+					north_t = TEX_HUGE_MUSHROOM_STEM + tex_offset;
+					top_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					bottom_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					break;
+				default:
+					west_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					east_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					south_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					north_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					top_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					bottom_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
+					break;
+			}
+		}
+
+		// Now assign the textures for each face, if we're supposed to
+		if (block.texture_dir_map != null)
+		{
+			data = getData(this.l.x, this.l.y, this.l.z);
+			BlockType.DIRECTION_ABS dir;
+			if (block.texture_dir_data_map != null && block.texture_dir_data_map.containsKey(data))
+			{
+				dir = block.texture_dir_data_map.get(data);
+			}
+			else
+			{
+				dir = BlockType.DIRECTION_ABS.NORTH;
+			}
+
+			switch (dir)
+			{
+				case NORTH:
+					switch (facingPass)
 					{
-						case TORCH:
-							renderTorch(textureId,this.l.x,this.l.y,this.l.z);
-							break;
-						case DECORATION_CROSS:
-							renderCrossDecoration(textureId,this.l.x,this.l.y,this.l.z);
-							break;
-						case DECORATION_GRID:
-							renderGridDecoration(textureId,this.l.x,this.l.y,this.l.z);
-							break;
-						case LADDER:
-							renderLadder(textureId,this.l.x,this.l.y,this.l.z);
-							break;
-						case FLOOR:
-							renderFloor(textureId,this.l.x,this.l.y,this.l.z);
-							break;
-						case MINECART_TRACKS:
-							renderMinecartTracks(textureId,this.l.x,this.l.y,this.l.z,block,tex_offset);
-							break;
-						case SIMPLE_RAIL:
-							renderSimpleRail(textureId,this.l.x,this.l.y,this.l.z,block,tex_offset);
-							break;
-						case PRESSURE_PLATE:
-							renderPlate(textureId,this.l.x,this.l.y,this.l.z);
-							break;
-						case DOOR:
-							renderDoor(textureId,this.l.x,this.l.y,this.l.z,block,tex_offset);
-							break;
-						case STAIRS:
-							renderStairs(textureId,this.l.x,this.l.y,this.l.z,this.lOffset);
-							break;
-						case SIGNPOST:
-							renderSignpost(textureId,this.l.x,this.l.y,this.l.z);
-							break;
-						case WALLSIGN:
-							renderWallSign(textureId,this.l.x,this.l.y,this.l.z);
-							break;
-						case FENCE:
-							renderFence(textureId,this.l.x,this.l.y,this.l.z,this.lOffset,t);
-							break;
-						case FENCE_GATE:
-							renderFenceGate(textureId,this.l.x,this.l.y,this.l.z,this.lOffset);
-							break;
-						case LEVER:
-							renderLever(textureId,this.l.x,this.l.y,this.l.z,block,tex_offset);
-							break;
-						case BUTTON:
-							renderButton(textureId,this.l.x,this.l.y,this.l.z);
-							break;
-						case PORTAL:
-							renderPortal(textureId,this.l.x,this.l.y,this.l.z,this.lOffset,t);
-							break;
-						case SNOW:
-							renderSnow(textureId,this.l.x,this.l.y,this.l.z,this.lOffset,t);
-							break;
-						case BED:
-							renderBed(textureId,this.l.x,this.l.y,this.l.z,block,tex_offset);
-							break;
-						case TRAPDOOR:
-							renderTrapdoor(textureId,this.l.x,this.l.y,this.l.z);
-							break;
-						case PISTON_BODY:
-							renderPistonBody(textureId,this.l.x,this.l.y,this.l.z,block,tex_offset);
-							break;
-						case PISTON_HEAD:
-							renderPistonHead(textureId,this.l.x,this.l.y,this.l.z,block,tex_offset,false,false);
-							break;
-						case CAKE:
-							renderCake(textureId,this.l.x,this.l.y,this.l.z,block,tex_offset);
-							break;
-						case VINE:
-							renderVine(textureId,this.l.x,this.l.y,this.l.z,this.lOffset);
-							break;
-						case SOLID_PANE:
-							renderSolidPane(textureId,this.l.x,this.l.y,this.l.z,this.lOffset,t);
-							break;
-						case CHEST:
-							renderChest(textureId,this.l.x,this.l.y,this.l.z,this.lOffset,block,tex_offset);
-							break;
-						case STEM:
-							renderStem(textureId,this.l.x,this.l.y,this.l.z,this.lOffset,block,tex_offset);
-							break;
-						case HALFHEIGHT:
-							renderHalfHeight(textureId,this.l.x,this.l.y,this.l.z,this.lOffset);
-							break;
-						case CAULDRON:
-							renderCauldron(textureId,this.l.x,this.l.y,this.l.z,this.lOffset,block,tex_offset);
-							break;
-						case ENCHANTMENT_TABLE:
-							renderEnchantmentTable(textureId,this.l.x,this.l.y,this.l.z,this.lOffset,block,tex_offset);
-							break;
-						case BREWING_STAND:
-							renderBrewingStand(textureId,this.l.x,this.l.y,this.l.z,block,tex_offset);
-							break;
-						case SEMISOLID:
-						case WATER:
-						case GLASS:
-							renderSemisolid(textureId,this.l.x,this.l.y,this.l.z,this.lOffset,t);
-							break;
-						case END_PORTAL:
-							renderEndPortal(textureId,this.l.x,this.l.y,this.l.z);
-							break;
-						case END_PORTAL_FRAME:
-							renderEndPortalFrame(textureId,this.l.x,this.l.y,this.l.z,this.lOffset,block,tex_offset);
-							break;
-						case DRAGON_EGG:
-							renderDragonEgg(textureId,this.l.x,this.l.y,this.l.z);
-							break;
-
-						case NORMAL:
-						case HUGE_MUSHROOM:
-						default:
-							north_t = textureId;
-							south_t = textureId;
-							west_t = textureId;
-							east_t = textureId;
-							top_t = textureId;
-							bottom_t = textureId;
-
-							// Huge Mushrooms are special-case since keeping the data in YAML seemed
-							// like far too much work at the time. Keeping them there does technically
-							// make more sense, so we should do that eventually.
-							// TODO: That ^
-							if (block.type == BLOCK_TYPE.HUGE_MUSHROOM)
+						case NORTH:
+						case SOUTH:
+							if (block.texture_dir_map.containsKey(BlockType.DIRECTION_REL.FORWARD))
 							{
-								int TEX_HUGE_MUSHROOM_PORES = block.texture_extra_map.get("pores");
-								int TEX_HUGE_MUSHROOM_STEM = block.texture_extra_map.get("stem");
-								data = getData(this.l.x, this.l.y, this.l.z);
-								switch (data)
-								{
-									case 0:
-										west_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										east_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										south_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										north_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										top_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										bottom_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										break;
-									case 1:
-										east_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										south_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										bottom_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										break;
-									case 2:
-										west_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										east_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										south_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										bottom_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										break;
-									case 3:
-										west_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										south_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										bottom_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										break;
-									case 4:
-										east_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										south_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										north_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										bottom_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										break;
-									case 5:
-										west_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										east_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										south_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										north_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										bottom_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										break;
-									case 6:
-										west_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										south_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										north_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										bottom_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										break;
-									case 7:
-										east_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										north_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										bottom_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										break;
-									case 8:
-										west_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										east_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										north_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										bottom_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										break;
-									case 9:
-										west_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										north_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										bottom_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										break;
-									case 10:
-										west_t = TEX_HUGE_MUSHROOM_STEM + tex_offset;
-										east_t = TEX_HUGE_MUSHROOM_STEM + tex_offset;
-										south_t = TEX_HUGE_MUSHROOM_STEM + tex_offset;
-										north_t = TEX_HUGE_MUSHROOM_STEM + tex_offset;
-										top_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										bottom_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										break;
-									default:
-										west_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										east_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										south_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										north_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										top_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										bottom_t = TEX_HUGE_MUSHROOM_PORES + tex_offset;
-										break;
-								}
+								north_t = block.texture_dir_map.get(BlockType.DIRECTION_REL.FORWARD) + tex_offset;
 							}
-
-							// Now assign the textures for each face, if we're supposed to
-							if (block.texture_dir_map != null)
+							if (block.texture_dir_map.containsKey(BlockType.DIRECTION_REL.BACKWARD))
 							{
-								data = getData(this.l.x, this.l.y, this.l.z);
-								BlockType.DIRECTION_ABS dir;
-								if (block.texture_dir_data_map != null && block.texture_dir_data_map.containsKey(data))
-								{
-									dir = block.texture_dir_data_map.get(data);
-								}
-								else
-								{
-									dir = BlockType.DIRECTION_ABS.NORTH;
-								}
-
-								switch (dir)
-								{
-									case NORTH:
-										switch (facingPass)
-										{
-											case NORTH:
-											case SOUTH:
-												if (block.texture_dir_map.containsKey(BlockType.DIRECTION_REL.FORWARD))
-												{
-													north_t = block.texture_dir_map.get(BlockType.DIRECTION_REL.FORWARD) + tex_offset;
-												}
-												if (block.texture_dir_map.containsKey(BlockType.DIRECTION_REL.BACKWARD))
-												{
-													south_t = block.texture_dir_map.get(BlockType.DIRECTION_REL.BACKWARD) + tex_offset;
-												}
-												break;
-											case WEST:
-											case EAST:
-												if (block.texture_dir_map.containsKey(BlockType.DIRECTION_REL.SIDES))
-												{
-													west_t = block.texture_dir_map.get(BlockType.DIRECTION_REL.SIDES) + tex_offset;
-													east_t = block.texture_dir_map.get(BlockType.DIRECTION_REL.SIDES) + tex_offset;
-												}
-												break;
-										}
-										break;
-									case SOUTH:
-										switch (facingPass)
-										{
-											case NORTH:
-											case SOUTH:
-												if (block.texture_dir_map.containsKey(BlockType.DIRECTION_REL.BACKWARD))
-												{
-													north_t = block.texture_dir_map.get(BlockType.DIRECTION_REL.BACKWARD) + tex_offset;
-												}
-												if (block.texture_dir_map.containsKey(BlockType.DIRECTION_REL.FORWARD))
-												{
-													south_t = block.texture_dir_map.get(BlockType.DIRECTION_REL.FORWARD) + tex_offset;
-												}
-												break;
-											case WEST:
-											case EAST:
-												if (block.texture_dir_map.containsKey(BlockType.DIRECTION_REL.SIDES))
-												{
-													west_t = block.texture_dir_map.get(BlockType.DIRECTION_REL.SIDES) + tex_offset;
-													east_t = block.texture_dir_map.get(BlockType.DIRECTION_REL.SIDES) + tex_offset;
-												}
-												break;
-										}
-										break;
-									case WEST:
-										switch (facingPass)
-										{
-											case NORTH:
-											case SOUTH:
-												if (block.texture_dir_map.containsKey(BlockType.DIRECTION_REL.SIDES))
-												{
-													north_t = block.texture_dir_map.get(BlockType.DIRECTION_REL.SIDES) + tex_offset;
-													south_t = block.texture_dir_map.get(BlockType.DIRECTION_REL.SIDES) + tex_offset;
-												}
-												break;
-											case WEST:
-											case EAST:
-												if (block.texture_dir_map.containsKey(BlockType.DIRECTION_REL.FORWARD))
-												{
-													west_t = block.texture_dir_map.get(BlockType.DIRECTION_REL.FORWARD) + tex_offset;
-												}
-												if (block.texture_dir_map.containsKey(BlockType.DIRECTION_REL.BACKWARD))
-												{
-													east_t = block.texture_dir_map.get(BlockType.DIRECTION_REL.BACKWARD) + tex_offset;
-												}
-												break;
-										}
-										break;
-									case EAST:
-										switch (facingPass)
-										{
-											case NORTH:
-											case SOUTH:
-												if (block.texture_dir_map.containsKey(BlockType.DIRECTION_REL.SIDES))
-												{
-													north_t = block.texture_dir_map.get(BlockType.DIRECTION_REL.SIDES) + tex_offset;
-													south_t = block.texture_dir_map.get(BlockType.DIRECTION_REL.SIDES) + tex_offset;
-												}
-												break;
-											case WEST:
-											case EAST:
-												if (block.texture_dir_map.containsKey(BlockType.DIRECTION_REL.BACKWARD))
-												{
-													west_t = block.texture_dir_map.get(BlockType.DIRECTION_REL.BACKWARD) + tex_offset;
-												}
-												if (block.texture_dir_map.containsKey(BlockType.DIRECTION_REL.FORWARD))
-												{
-													east_t = block.texture_dir_map.get(BlockType.DIRECTION_REL.FORWARD) + tex_offset;
-												}
-												break;
-										}
-										break;
-								}
-
-								// Top/Bottom doesn't depend on orientation, at least for anything currently in Minecraft.
-								// If Minecraft starts adding blocks that can be oriented Up or Down, we'll have to move
-								// this back into the case statement above
-								switch (facingPass)
-								{
-									case TOP:
-										if (block.texture_dir_map.containsKey(BlockType.DIRECTION_REL.TOP))
-										{
-											top_t = block.texture_dir_map.get(BlockType.DIRECTION_REL.TOP) + tex_offset;
-										}
-										break;
-									case BOTTOM:
-										if (block.texture_dir_map.containsKey(BlockType.DIRECTION_REL.BOTTOM))
-										{
-											bottom_t = block.texture_dir_map.get(BlockType.DIRECTION_REL.BOTTOM) + tex_offset;
-										}
-										break;
-								}
+								south_t = block.texture_dir_map.get(BlockType.DIRECTION_REL.BACKWARD) + tex_offset;
 							}
-
-							int curTexture = 0;
-							switch(facingPass)
+							break;
+						case WEST:
+						case EAST:
+							if (block.texture_dir_map.containsKey(BlockType.DIRECTION_REL.SIDES))
 							{
-							case TOP: curTexture = top_t; break;
-							case BOTTOM: curTexture = bottom_t; break;
-							case NORTH: curTexture = north_t; break;
-							case SOUTH: curTexture = south_t; break;
-							case EAST: curTexture = east_t; break;
-							case WEST: curTexture = west_t; break;
-							}
-
-							// Finally, we're to the point of actually rendering the solid
-							if(pass != RENDER_PASS.SELECTED || highlightingOres)
-							{
-								this.renderBlockFace(curTexture, worldX+this.l.x, this.l.y, worldZ+this.l.z, facingPass);
+								west_t = block.texture_dir_map.get(BlockType.DIRECTION_REL.SIDES) + tex_offset;
+								east_t = block.texture_dir_map.get(BlockType.DIRECTION_REL.SIDES) + tex_offset;
 							}
 							break;
 					}
-				}
+					break;
+				case SOUTH:
+					switch (facingPass)
+					{
+						case NORTH:
+						case SOUTH:
+							if (block.texture_dir_map.containsKey(BlockType.DIRECTION_REL.BACKWARD))
+							{
+								north_t = block.texture_dir_map.get(BlockType.DIRECTION_REL.BACKWARD) + tex_offset;
+							}
+							if (block.texture_dir_map.containsKey(BlockType.DIRECTION_REL.FORWARD))
+							{
+								south_t = block.texture_dir_map.get(BlockType.DIRECTION_REL.FORWARD) + tex_offset;
+							}
+							break;
+						case WEST:
+						case EAST:
+							if (block.texture_dir_map.containsKey(BlockType.DIRECTION_REL.SIDES))
+							{
+								west_t = block.texture_dir_map.get(BlockType.DIRECTION_REL.SIDES) + tex_offset;
+								east_t = block.texture_dir_map.get(BlockType.DIRECTION_REL.SIDES) + tex_offset;
+							}
+							break;
+					}
+					break;
+				case WEST:
+					switch (facingPass)
+					{
+						case NORTH:
+						case SOUTH:
+							if (block.texture_dir_map.containsKey(BlockType.DIRECTION_REL.SIDES))
+							{
+								north_t = block.texture_dir_map.get(BlockType.DIRECTION_REL.SIDES) + tex_offset;
+								south_t = block.texture_dir_map.get(BlockType.DIRECTION_REL.SIDES) + tex_offset;
+							}
+							break;
+						case WEST:
+						case EAST:
+							if (block.texture_dir_map.containsKey(BlockType.DIRECTION_REL.FORWARD))
+							{
+								west_t = block.texture_dir_map.get(BlockType.DIRECTION_REL.FORWARD) + tex_offset;
+							}
+							if (block.texture_dir_map.containsKey(BlockType.DIRECTION_REL.BACKWARD))
+							{
+								east_t = block.texture_dir_map.get(BlockType.DIRECTION_REL.BACKWARD) + tex_offset;
+							}
+							break;
+					}
+					break;
+				case EAST:
+					switch (facingPass)
+					{
+						case NORTH:
+						case SOUTH:
+							if (block.texture_dir_map.containsKey(BlockType.DIRECTION_REL.SIDES))
+							{
+								north_t = block.texture_dir_map.get(BlockType.DIRECTION_REL.SIDES) + tex_offset;
+								south_t = block.texture_dir_map.get(BlockType.DIRECTION_REL.SIDES) + tex_offset;
+							}
+							break;
+						case WEST:
+						case EAST:
+							if (block.texture_dir_map.containsKey(BlockType.DIRECTION_REL.BACKWARD))
+							{
+								west_t = block.texture_dir_map.get(BlockType.DIRECTION_REL.BACKWARD) + tex_offset;
+							}
+							if (block.texture_dir_map.containsKey(BlockType.DIRECTION_REL.FORWARD))
+							{
+								east_t = block.texture_dir_map.get(BlockType.DIRECTION_REL.FORWARD) + tex_offset;
+							}
+							break;
+					}
+					break;
+			}
+
+			// Top/Bottom doesn't depend on orientation, at least for anything currently in Minecraft.
+			// If Minecraft starts adding blocks that can be oriented Up or Down, we'll have to move
+			// this back into the case statement above
+			switch (facingPass)
+			{
+				case TOP:
+					if (block.texture_dir_map.containsKey(BlockType.DIRECTION_REL.TOP))
+					{
+						top_t = block.texture_dir_map.get(BlockType.DIRECTION_REL.TOP) + tex_offset;
+					}
+					break;
+				case BOTTOM:
+					if (block.texture_dir_map.containsKey(BlockType.DIRECTION_REL.BOTTOM))
+					{
+						bottom_t = block.texture_dir_map.get(BlockType.DIRECTION_REL.BOTTOM) + tex_offset;
+					}
+					break;
 			}
 		}
 	}

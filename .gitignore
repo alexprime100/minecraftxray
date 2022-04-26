@@ -2,3 +2,4 @@ build
 dist
 *.swp
 minecraft_xray_output_log.txt
+/codemr/
