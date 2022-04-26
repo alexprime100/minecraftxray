@@ -27,11 +27,7 @@
  */
 package com.apocalyptech.minecraft.xray.dialog;
 
-import com.apocalyptech.minecraft.xray.XRay;
-import com.apocalyptech.minecraft.xray.WorldInfo;
-import com.apocalyptech.minecraft.xray.IntegerPair;
-import com.apocalyptech.minecraft.xray.XRayProperties;
-import com.apocalyptech.minecraft.xray.BlockTypeCollection;
+import com.apocalyptech.minecraft.xray.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -254,7 +250,7 @@ public class ResolutionDialog extends JFrame {
 		JLabel fullScreenLabel  = new JLabel("Full Screen: ");
 		JLabel invertMouseLabel  = new JLabel("Invert Mouselook: ");
 		JLabel blockdefInfoLabel = new JLabel("Loaded Blockdefs: ");
-		JLabel xrayTitleLabel  = new JLabel(XRay.windowTitle);
+		JLabel xrayTitleLabel  = new JLabel(Utility.windowTitle);
 		xrayTitleLabel.setFont(new Font("Arial", Font.BOLD, 16));
 
 		ArrayList<BlockTypeCollection> loadedCollections = blockCollection.getLoadedCollections();

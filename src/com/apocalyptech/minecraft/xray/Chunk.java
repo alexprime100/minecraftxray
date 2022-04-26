@@ -36,13 +36,12 @@ import java.util.regex.PatternSyntaxException;
 import com.apocalyptech.minecraft.Point;
 import org.lwjgl.opengl.GL11;
 
-import com.apocalyptech.minecraft.xray.dtf.ShortArrayTag;
-import com.apocalyptech.minecraft.xray.dtf.ByteArrayTag;
 import com.apocalyptech.minecraft.xray.dtf.CompoundTag;
 import com.apocalyptech.minecraft.xray.dtf.StringTag;
 import com.apocalyptech.minecraft.xray.dtf.ListTag;
 import com.apocalyptech.minecraft.xray.dtf.IntTag;
 import com.apocalyptech.minecraft.xray.dtf.Tag;
+
 
 import static com.apocalyptech.minecraft.xray.MinecraftConstants.*;
 
@@ -68,8 +67,8 @@ public abstract class Chunk {
 	private HashMap<Integer, Integer> nonstandardListNums;
 	private HashMap<Integer, Integer> glassListNums;
 	private HashMap<Integer, Integer> selectedDisplayListNums;
-	public int x, z;
-	public int x_chunkOffset, z_chunkOffset;
+	public Point point = new Point();
+	public Point chunkOffset = new Point();
 	public HashMap<Integer, Boolean> isDirty;
 	public HashMap<Integer, Boolean> isSelectedDirty;
 	public boolean isOnMinimap;
@@ -79,7 +78,7 @@ public abstract class Chunk {
 	protected CompoundTag levelTag;
 
 	// These are vars used while looping over our set of blocks
-	protected int lx, ly, lz;
+	protected Point l = new Point();
 	protected int lOffset;
 
 	// Maximum height of this chunk (will vary per Chunk for Anvil maps)
@@ -96,11 +95,6 @@ public abstract class Chunk {
 
 	public HashMap<Integer, Boolean> usedTextureSheets;
 
-	/*private final float fence.fence_postsize = .125f;
-	private final float fence.fence_postsize_h = fence.fence_postsize/2f;
-	private final float fence.fence_slat_height = .1875f;
-	private final float fence.fence_top_slat_offset = .375f;
-	private final float fence.fence_slat_start_offset = -.125f;*/
 	private Fence fence = new Fence();
 
 	private static enum RENDER_PASS {
@@ -152,20 +146,20 @@ public abstract class Chunk {
 			}
 		}
 		
-		this.x = xPosTag.value;
-		this.z = zPosTag.value;
+		this.point.x = xPosTag.value;
+		this.point.z = zPosTag.value;
 
-		this.x_chunkOffset = this.x * 16;
-		this.z_chunkOffset = this.z * 16;
+		this.chunkOffset.x = this.point.x * 16;
+		this.chunkOffset.z = this.point.z * 16;
 
 		// Lastly, compute whether or not we'll spawn slimes, based on the randomSeed
 		// Taken from http://www.minecraftforum.net/topic/397835-find-slime-spawning-chunks/
 		// Or, indirectly from http://www.minecraftwiki.net/wiki/Slime#Spawning
 		Random rnd = new Random(level.getRandomSeed() +
-				(long) (this.x * this.x * 0x4c1906) +
-				(long) (this.x * 0x5ac0db) +
-				(long) (this.z * this.z) * 0x4307a7L +
-				(long) (this.z * 0x5f24f) ^ 0x3ad8025f);
+				(long) (this.point.x * this.point.x * 0x4c1906) +
+				(long) (this.point.x * 0x5ac0db) +
+				(long) (this.point.z * this.point.z) * 0x4307a7L +
+				(long) (this.point.z * 0x5f24f) ^ 0x3ad8025f);
 		this.willSpawnSlimes = (rnd.nextInt(10) == 0);
 	}
 
@@ -189,7 +183,7 @@ public abstract class Chunk {
 			}
 			if (exploredBlocks.containsKey(t))
 			{
-				this.level.lightSources.add(this.x_chunkOffset + this.lx, this.ly, this.z_chunkOffset + this.lz);
+				this.level.lightSources.add(this.chunkOffset.x + this.l.x, this.l.y, this.chunkOffset.z + this.l.z);
 			}
 			BlockType block = blockArray[t];
 			if (block == null)
@@ -277,7 +271,7 @@ public abstract class Chunk {
 		}
 		else
 		{
-			Chunk otherChunk = level.getChunk(this.x-1, this.z);
+			Chunk otherChunk = level.getChunk(this.point.x-1, this.point.z);
 			if (otherChunk == null)
 			{
 				return -1;
@@ -302,7 +296,7 @@ public abstract class Chunk {
 		}
 		else
 		{
-			Chunk otherChunk = level.getChunk(this.x+1, this.z);
+			Chunk otherChunk = level.getChunk(this.point.x+1, this.point.z);
 			if (otherChunk == null)
 			{
 				return -1;
@@ -327,7 +321,7 @@ public abstract class Chunk {
 		}
 		else
 		{
-			Chunk otherChunk = level.getChunk(this.x, this.z-1);
+			Chunk otherChunk = level.getChunk(this.point.x, this.point.z-1);
 			if (otherChunk == null)
 			{
 				return -1;
@@ -352,7 +346,7 @@ public abstract class Chunk {
 		}
 		else
 		{
-			Chunk otherChunk = level.getChunk(this.x, this.z+1);
+			Chunk otherChunk = level.getChunk(this.point.x, this.point.z+1);
 			if (otherChunk == null)
 			{
 				return -1;
@@ -930,8 +924,8 @@ public abstract class Chunk {
 		float box_height = .15f;
 		float box_length = .2f;
 		float box_width = .15f;
-		float x = xxx + this.x*16;
-		float z = zzz + this.z*16;
+		float x = xxx + this.point.x*16;
+		float z = zzz + this.point.z*16;
 		float y = yyy;
 		switch (data) {
 			case 1:
@@ -1035,13 +1029,13 @@ public abstract class Chunk {
 	 */
 	public void renderCrossDecoration(int textureId, int xxx, int yyy, int zzz)
 	{
-		float x = xxx + this.x*16;
-		float z = zzz + this.z*16;
+		float x = xxx + this.point.x*16;
+		float z = zzz + this.point.z*16;
 		float y = yyy - 0.5f;
 
 		// We do the "% 256" here because our texture ID might be in the "highlighted"
 		// range, for Explored highlighting.
-		TextureDecorationStats stats = XRay.decorationStats.get(textureId % 256);
+		TextureDecorationStats stats = Utility.decorationStats.get(textureId % 256);
 		if (stats == null)
 		{
 			return;
@@ -1093,8 +1087,8 @@ public abstract class Chunk {
 	public void renderRectDecoration(int textureId, int xxx, int yyy, int zzz,
 			int rotate_degrees, float rotate_x, float rotate_z, float x_off, float z_off)
 	{
-		float x = xxx + this.x*16;
-		float z = zzz + this.z*16;
+		float x = xxx + this.point.x*16;
+		float z = zzz + this.point.z*16;
 		float y = yyy - 0.5f;
 
 		boolean do_rotate = false;
@@ -1110,12 +1104,12 @@ public abstract class Chunk {
 			do_rotate = true;
 		}
 
-		float my_x = xxx + this.x*16;
-		float my_z = zzz + this.z*16;
+		float my_x = xxx + this.point.x*16;
+		float my_z = zzz + this.point.z*16;
 		float my_y = yyy - 0.5f;
 		// We do the "% 256" here because our texture ID might be in the "highlighted"
 		// range, for Explored highlighting.
-		TextureDecorationStats stats = XRay.decorationStats.get(textureId % 256);
+		TextureDecorationStats stats = Utility.decorationStats.get(textureId % 256);
 		if (stats == null)
 		{
 			return;
@@ -1185,13 +1179,13 @@ public abstract class Chunk {
 	 */
 	public void renderGridDecoration(int textureId, int xxx, int yyy, int zzz)
 	{
-		 float x = xxx + this.x*16;
-		 float z = zzz + this.z*16;
+		 float x = xxx + this.point.x*16;
+		 float z = zzz + this.point.z*16;
 		 float y = yyy;
 
 		// We do the "% 256" here because our texture ID might be in the "highlighted"
 		// range, for Explored highlighting.
-		TextureDecorationStats stats = XRay.decorationStats.get(textureId % 256);
+		TextureDecorationStats stats = Utility.decorationStats.get(textureId % 256);
 		if (stats == null)
 		{
 			return;
@@ -1235,8 +1229,8 @@ public abstract class Chunk {
 	 * @param zzz
 	 */
 	public void renderLadder(int textureId, int xxx, int yyy, int zzz) {
-		 float x = xxx + this.x*16;
-		 float z = zzz + this.z*16;
+		 float x = xxx + this.point.x*16;
+		 float z = zzz + this.point.z*16;
 		 float y = yyy;
 		 
 		 byte data = getData(xxx, yyy, zzz);
@@ -1272,8 +1266,8 @@ public abstract class Chunk {
 	 * @param zzz
 	 */
 	public void renderVine(int textureId, int xxx, int yyy, int zzz, int blockOffset) {
-		 float x = xxx + this.x*16;
-		 float z = zzz + this.z*16;
+		 float x = xxx + this.point.x*16;
+		 float z = zzz + this.point.z*16;
 		 float y = yyy;
 		 
 		 byte data = getData(xxx, yyy, zzz);
@@ -1319,8 +1313,8 @@ public abstract class Chunk {
 	 * @param zzz
 	 */
 	public void renderFloor(int textureId, int xxx, int yyy, int zzz) {
-		 float x = xxx + this.x*16;
-		 float z = zzz + this.z*16;
+		 float x = xxx + this.point.x*16;
+		 float z = zzz + this.point.z*16;
 		 float y = yyy;
 		 
 		this.renderBlockFace(textureId, x, y+TEX64, z, FACING.BOTTOM);
@@ -1335,8 +1329,8 @@ public abstract class Chunk {
 	 * @param zzz
 	 */
 	public void renderMinecartTracks(int textureId, int xxx, int yyy, int zzz, BlockType block, int tex_offset) {
-		float x = xxx + this.x*16;
-		float z = zzz + this.z*16;
+		float x = xxx + this.point.x*16;
+		float z = zzz + this.point.z*16;
 		float y = yyy;
 		 
 		byte data = getData(xxx, yyy, zzz);
@@ -1414,8 +1408,8 @@ public abstract class Chunk {
 	 * @param zzz
 	 */
 	public void renderSimpleRail(int textureId, int xxx, int yyy, int zzz, BlockType block, int tex_offset) {
-		float x = xxx + this.x*16;
-		float z = zzz + this.z*16;
+		float x = xxx + this.point.x*16;
+		float z = zzz + this.point.z*16;
 		float y = yyy;
 		 
 		byte data = getData(xxx, yyy, zzz);
@@ -1484,8 +1478,8 @@ public abstract class Chunk {
 	 * @param zzz
 	 */
 	public void renderPlate(int textureId, int xxx, int yyy, int zzz) {
-		float x = xxx + this.x*16;
-		float z = zzz + this.z*16;
+		float x = xxx + this.point.x*16;
+		float z = zzz + this.point.z*16;
 		float y = yyy;
 		float radius = 0.4f;
 		
@@ -1512,8 +1506,8 @@ public abstract class Chunk {
 	 * @param blockOffset Should be passed in from our main draw loop so we don't have to recalculate
 	 */
 	public void renderSnow(int textureId, int xxx, int yyy, int zzz, int blockOffset, int blockId) {
-		float x = xxx + this.x*16;
-		float z = zzz + this.z*16;
+		float x = xxx + this.point.x*16;
+		float z = zzz + this.point.z*16;
 		float y = yyy;
 		float edge = 0.5f;
 		float top = -.375f;
@@ -1561,8 +1555,8 @@ public abstract class Chunk {
 	 * @param zzz
 	 */
 	public void renderBed(int textureId, int xxx, int yyy, int zzz, BlockType block, int tex_offset) {
-		float x = xxx + this.x*16;
-		float z = zzz + this.z*16;
+		float x = xxx + this.point.x*16;
+		float z = zzz + this.point.z*16;
 		float y = yyy;
 		float side_part = 0.49f;
 		float side_full = 0.5f;
@@ -1651,8 +1645,8 @@ public abstract class Chunk {
 	 * @param zzz
 	 */
 	public void renderDoor(int textureId, int xxx, int yyy, int zzz, BlockType block, int tex_offset) {
-		float x = xxx + this.x*16;
-		float z = zzz + this.z*16;
+		float x = xxx + this.point.x*16;
+		float z = zzz + this.point.z*16;
 		float y = yyy;
 		byte data = getData(xxx, yyy, zzz);
 
@@ -1748,8 +1742,8 @@ public abstract class Chunk {
 	 * @param zzz
 	 */
 	public void renderTrapdoor(int textureId, int xxx, int yyy, int zzz) {
-		float x = xxx + this.x*16;
-		float z = zzz + this.z*16;
+		float x = xxx + this.point.x*16;
+		float z = zzz + this.point.z*16;
 		float y = yyy;
 		float twidth = .1f;
 		//float twidth_h = twidth/2f;
@@ -2068,8 +2062,8 @@ public abstract class Chunk {
 	 * @param zzz
 	 */
 	public void renderStairs(int textureId, int xxx, int yyy, int zzz, int blockOffset) {
-		float x = xxx + this.x*16;
-		float z = zzz + this.z*16;
+		float x = xxx + this.point.x*16;
+		float z = zzz + this.point.z*16;
 		float y = yyy;
 
 		// GL stuff; only draw one way
@@ -2245,8 +2239,8 @@ public abstract class Chunk {
 	 * @param zzz
 	 */
 	public void renderSignpost(int textureId, int xxx, int yyy, int zzz) {
-		float x = xxx + this.x*16;
-		float z = zzz + this.z*16;
+		float x = xxx + this.point.x*16;
+		float z = zzz + this.point.z*16;
 		float y = yyy;
 		
 		float signBottom = 0f;
@@ -2312,8 +2306,8 @@ public abstract class Chunk {
 	 * @param zzz
 	 */
 	public void renderWallSign(int textureId, int xxx, int yyy, int zzz) {
-		float x = xxx + this.x*16;
-		float z = zzz + this.z*16;
+		float x = xxx + this.point.x*16;
+		float z = zzz + this.point.z*16;
 		float y = yyy;
 
 		float faceX1, faceX2;
@@ -2388,11 +2382,11 @@ public abstract class Chunk {
 	 * @param blockOffset Should be passed in from our main draw loop so we don't have to recalculate
 	 */
 	public void renderFence(int textureId, int xxx, int yyy, int zzz, int blockOffset, int blockId) {
-		float x = xxx + this.x*16;
-		float z = zzz + this.z*16;
+		float x = xxx + this.point.x*16;
+		float z = zzz + this.point.z*16;
 		float y = yyy;
 		float slat_start = y + fence.fence_slat_start_offset;
-		boolean beta19_fences = XRay.toggle.beta19_fences;
+		boolean beta19_fences = Utility.toggle.beta19_fences;
 		
 		// First the fencepost
 		this.renderVertical(textureId, x+fence.fence_postsize, z+fence.fence_postsize, x+fence.fence_postsize, z-fence.fence_postsize, y-0.5f, 1f, 4, 16, 6, 0);
@@ -2619,8 +2613,8 @@ public abstract class Chunk {
 	 * @param blockOffset Should be passed in from our main draw loop so we don't have to recalculate
 	 */
 	public void renderFenceGate(int textureId, int xxx, int yyy, int zzz, int blockOffset) {
-		float x = xxx + this.x*16;
-		float z = zzz + this.z*16;
+		float x = xxx + this.point.x*16;
+		float z = zzz + this.point.z*16;
 		float y = yyy;
 
 		float post_x1 = .375f;
@@ -2741,8 +2735,8 @@ public abstract class Chunk {
 	 * Renders a button.
 	 */
 	public void renderButton(int textureId, int xxx, int yyy, int zzz) {
-		float x = xxx + this.x*16;
-		float z = zzz + this.z*16;
+		float x = xxx + this.point.x*16;
+		float z = zzz + this.point.z*16;
 		float y = yyy;
 		
 		float faceX1, faceX2;
@@ -2816,8 +2810,8 @@ public abstract class Chunk {
 	 * @param blockId The block ID we match on, to find out how to link up
 	 */
 	public void renderPortal(int textureId, int xxx, int yyy, int zzz, int blockOffset, int blockId) {
-		float x = xxx + this.x*16;
-		float z = zzz + this.z*16;
+		float x = xxx + this.point.x*16;
+		float z = zzz + this.point.z*16;
 		float y = yyy;
 		
 		// Check to see where adjoining Portal spaces are, so we know which
@@ -2891,8 +2885,8 @@ public abstract class Chunk {
 	 * @param block The actual BlockType object; needed for the piston head
 	 */
 	public void renderPistonBody(int textureId, int xxx, int yyy, int zzz, BlockType block, int tex_offset) {
-		float x = xxx + this.x*16;
-		float z = zzz + this.z*16;
+		float x = xxx + this.point.x*16;
+		float z = zzz + this.point.z*16;
 		float y = yyy;
 		byte data = getData(xxx, yyy, zzz);
 		boolean extended = ((data & 0x8) == 0x8);
@@ -2975,8 +2969,8 @@ public abstract class Chunk {
 	 * @param override_sticky If attached, are we a sticky piston or a regular piston?
 	 */
 	public void renderPistonHead(int textureId, int xxx, int yyy, int zzz, BlockType block, int tex_offset, boolean attached, boolean override_sticky) {
-		float x = xxx + this.x*16;
-		float z = zzz + this.z*16;
+		float x = xxx + this.point.x*16;
+		float z = zzz + this.point.z*16;
 		float y = yyy;
 		byte data = getData(xxx, yyy, zzz);
 		boolean sticky = ((data & 0x8) == 0x8);
@@ -3060,8 +3054,8 @@ public abstract class Chunk {
 	 * @param zzz
 	 */
 	public void renderCake(int textureId, int xxx, int yyy, int zzz, BlockType block, int tex_offset) {
-		float x = xxx + this.x*16;
-		float z = zzz + this.z*16;
+		float x = xxx + this.point.x*16;
+		float z = zzz + this.point.z*16;
 		float y = yyy;
 
 		byte bites_eaten = getData(xxx, yyy, zzz);
@@ -3149,8 +3143,8 @@ public abstract class Chunk {
 	 * @param zzz
 	 */
 	public void renderSolidPane(int textureId, int xxx, int yyy, int zzz, int blockOffset, int blockId) {
-		float x = xxx + this.x*16;
-		float z = zzz + this.z*16;
+		float x = xxx + this.point.x*16;
+		float z = zzz + this.point.z*16;
 		float y = yyy;
 
 		boolean has_north = false;
@@ -3264,8 +3258,8 @@ public abstract class Chunk {
 	 * @param zzz
 	 */
 	public void renderChest(int textureId, int xxx, int yyy, int zzz, int blockOffset, BlockType block, int tex_offset) {
-		float x = xxx + this.x*16;
-		float z = zzz + this.z*16;
+		float x = xxx + this.point.x*16;
+		float z = zzz + this.point.z*16;
 		float y = yyy;
 
 		float edges = .45f;
@@ -3356,8 +3350,8 @@ public abstract class Chunk {
 	 * @param zzz
 	 */
 	public void renderStem(int textureId, int xxx, int yyy, int zzz, int blockOffset, BlockType block, int tex_offset) {
-		float x = xxx + this.x*16;
-		float z = zzz + this.z*16;
+		float x = xxx + this.point.x*16;
+		float z = zzz + this.point.z*16;
 		float y = yyy;
 
 		byte data = getData(xxx, yyy, zzz);
@@ -3422,7 +3416,7 @@ public abstract class Chunk {
 		if (connected)
 		{
 			int curve_tex = block.texture_extra_map.get("curve")+tex_offset;
-			TextureDecorationStats stats = XRay.decorationStats.get(curve_tex % 256);
+			TextureDecorationStats stats = Utility.decorationStats.get(curve_tex % 256);
 			float tex_begin_x = precalcSpriteSheetToTextureX[curve_tex] + stats.getTexLeft();
 			float tex_begin_y = precalcSpriteSheetToTextureY[curve_tex] + stats.getTexTop();
 			float tex_width = stats.getTexWidth();
@@ -3463,8 +3457,8 @@ public abstract class Chunk {
 	 */
 	public void renderCauldron(int textureId, int xxx, int yyy, int zzz, int blockOffset, BlockType block, int tex_offset)
 	{
-		float x = xxx + this.x*16;
-		float z = zzz + this.z*16;
+		float x = xxx + this.point.x*16;
+		float z = zzz + this.point.z*16;
 		float y = yyy;
 		float edge = .48f;
 		float bottom = -.5f;
@@ -3524,8 +3518,8 @@ public abstract class Chunk {
 	 */
 	public void renderEnchantmentTable(int textureId, int xxx, int yyy, int zzz, int blockOffset, BlockType block, int tex_offset)
 	{
-		float x = xxx + this.x*16;
-		float z = zzz + this.z*16;
+		float x = xxx + this.point.x*16;
+		float z = zzz + this.point.z*16;
 		float y = yyy;
 		float edge = .48f;
 		float height = .75f;
@@ -3591,8 +3585,8 @@ public abstract class Chunk {
 	 * @param zzz
 	 */
 	public void renderHalfHeight(int textureId, int xxx, int yyy, int zzz, int blockOffset) {
-		float x = xxx + this.x*16;
-		float z = zzz + this.z*16;
+		float x = xxx + this.point.x*16;
+		float z = zzz + this.point.z*16;
 		float y = yyy;
 
 		byte data = getData(xxx, yyy, zzz);
@@ -3686,8 +3680,8 @@ public abstract class Chunk {
 	 * @param zzz
 	 */
 	public void renderSemisolid(int textureId, int xxx, int yyy, int zzz, int blockOffset, int blockId) {
-		float x = xxx + this.x*16;
-		float z = zzz + this.z*16;
+		float x = xxx + this.point.x*16;
+		float z = zzz + this.point.z*16;
 		float y = yyy;
 		short adj;
 
@@ -3779,8 +3773,8 @@ public abstract class Chunk {
 	 * param blockId
 	 */
 	public void renderEndPortal(int textureId, int xxx, int yyy, int zzz) {
-		float x = xxx + this.x*16;
-		float z = zzz + this.z*16;
+		float x = xxx + this.point.x*16;
+		float z = zzz + this.point.z*16;
 		float y = yyy;
 		
 		renderHorizontal(textureId, x-.5f, z-.5f, x+.5f, z+.5f, y+.25f);
@@ -3797,8 +3791,8 @@ public abstract class Chunk {
 	 * param blockId
 	 */
 	public void renderEndPortalFrame(int textureId, int xxx, int yyy, int zzz, int blockOffset, BlockType block, int tex_offset) {
-		float x = xxx + this.x*16;
-		float z = zzz + this.z*16;
+		float x = xxx + this.point.x*16;
+		float z = zzz + this.point.z*16;
 		float y = yyy;
 		float side_height = .8125f;
 		float side = .5f;
@@ -3862,8 +3856,8 @@ public abstract class Chunk {
 	 * @param zzz
 	 */
 	public void renderBrewingStand(int textureId, int xxx, int yyy, int zzz, BlockType block, int tex_offset) {
-		float x = xxx + this.x*16;
-		float z = zzz + this.z*16;
+		float x = xxx + this.point.x*16;
+		float z = zzz + this.point.z*16;
 		float y = yyy;
 
 		float zero = 0f;
@@ -3878,7 +3872,7 @@ public abstract class Chunk {
 		float nine = .5625f;
 		float postheight = .875f;
 
-		TextureDecorationStats stats = XRay.decorationStats.get(textureId % 256);
+		TextureDecorationStats stats = Utility.decorationStats.get(textureId % 256);
 		if (stats == null)
 		{
 			return;
@@ -3996,8 +3990,8 @@ public abstract class Chunk {
 	 * @param zzz
 	 */
 	public void renderDragonEgg(int textureId, int xxx, int yyy, int zzz) {
-		float x = xxx + this.x*16;
-		float z = zzz + this.z*16;
+		float x = xxx + this.point.x*16;
+		float z = zzz + this.point.z*16;
 		float y = yyy;
 
 		float bottom = -.5f;
@@ -4051,13 +4045,13 @@ public abstract class Chunk {
 	 */
 	public void renderWorld(RENDER_PASS pass, int sheet, boolean[] selectedMap) {
 
-		float worldX = this.x*16;
-		float worldZ = this.z*16;
+		float worldX = this.point.x*16;
+		float worldZ = this.point.z*16;
 		
 		boolean draw = false;
 		int tex_offset = 0;
 		BlockType block;
-		boolean highlightingOres = (XRay.toggle.highlightOres != XRay.HIGHLIGHT_TYPE.OFF);
+		boolean highlightingOres = (Utility.toggle.highlightOres != XRay.HIGHLIGHT_TYPE.OFF);
 		short t;
 		int xOff, zOff, blockOffset;
 		int x, y, z;
@@ -4131,7 +4125,7 @@ public abstract class Chunk {
 				
 				// Doublecheck for water
 				if ((pass != RENDER_PASS.NONSTANDARD && block.type == BLOCK_TYPE.WATER) ||
-						(!XRay.toggle.render_water && block.type == BLOCK_TYPE.WATER))
+						(!Utility.toggle.render_water && block.type == BLOCK_TYPE.WATER))
 				{
 					continue;
 				}
@@ -4162,11 +4156,11 @@ public abstract class Chunk {
 						draw = false;
 
 						// Check for adjacent blocks
-						draw = checkSolid(getAdjBlockId(this.lx, this.ly, this.lz, facingPass, this.lOffset))
+						draw = checkSolid(getAdjBlockId(this.l.x, this.l.y, this.l.z, facingPass, this.lOffset))
 							|| (
-								XRay.toggle.render_bedrock
+								Utility.toggle.render_bedrock
 								&& t == BLOCK_BEDROCK.id
-								&& getAdjBlockId(this.lx, this.ly, this.lz, facingPass, this.lOffset) != BLOCK_BEDROCK.id);
+								&& getAdjBlockId(this.l.x, this.l.y, this.l.z, facingPass, this.lOffset) != BLOCK_BEDROCK.id);
 						break;
 
 					case NONSTANDARD:
@@ -4206,7 +4200,7 @@ public abstract class Chunk {
 					// on the block's data value
 					if (block.texture_data_map != null)
 					{
-						data = getData(this.lx, this.ly, this.lz);
+						data = getData(this.l.x, this.l.y, this.l.z);
 						data &= block.tex_data_mask;
 
 						// Now try to get the new texture
@@ -4217,15 +4211,15 @@ public abstract class Chunk {
 						catch (NullPointerException e)
 						{
 							// Just report and continue
-							XRay.logger.debug("Unknown data value for block " + block.idStr + ": " + data);
+							Utility.logger.debug("Unknown data value for block " + block.idStr + ": " + data);
 						}
 					}
 
 					// If we're highlighting explored regions and there's an adjacent
 					// torch, flip over to the "highlighted" textures
-					if (XRay.toggle.highlight_explored)
+					if (Utility.toggle.highlight_explored)
 					{
-						if (this.level.lightSources.check(this.x_chunkOffset + this.lx, this.ly, this.z_chunkOffset + this.lz))
+						if (this.level.lightSources.check(this.chunkOffset.x + this.l.x, this.l.y, this.chunkOffset.z + this.l.z))
 						{
 							textureId += 256;
 							tex_offset = 256;
@@ -4244,111 +4238,111 @@ public abstract class Chunk {
 					switch(block.type)
 					{
 						case TORCH:
-							renderTorch(textureId,this.lx,this.ly,this.lz);
+							renderTorch(textureId,this.l.x,this.l.y,this.l.z);
 							break;
 						case DECORATION_CROSS:
-							renderCrossDecoration(textureId,this.lx,this.ly,this.lz);
+							renderCrossDecoration(textureId,this.l.x,this.l.y,this.l.z);
 							break;
 						case DECORATION_GRID:
-							renderGridDecoration(textureId,this.lx,this.ly,this.lz);
+							renderGridDecoration(textureId,this.l.x,this.l.y,this.l.z);
 							break;
 						case LADDER:
-							renderLadder(textureId,this.lx,this.ly,this.lz);
+							renderLadder(textureId,this.l.x,this.l.y,this.l.z);
 							break;
 						case FLOOR:
-							renderFloor(textureId,this.lx,this.ly,this.lz);
+							renderFloor(textureId,this.l.x,this.l.y,this.l.z);
 							break;
 						case MINECART_TRACKS:
-							renderMinecartTracks(textureId,this.lx,this.ly,this.lz,block,tex_offset);
+							renderMinecartTracks(textureId,this.l.x,this.l.y,this.l.z,block,tex_offset);
 							break;
 						case SIMPLE_RAIL:
-							renderSimpleRail(textureId,this.lx,this.ly,this.lz,block,tex_offset);
+							renderSimpleRail(textureId,this.l.x,this.l.y,this.l.z,block,tex_offset);
 							break;
 						case PRESSURE_PLATE:
-							renderPlate(textureId,this.lx,this.ly,this.lz);
+							renderPlate(textureId,this.l.x,this.l.y,this.l.z);
 							break;
 						case DOOR:
-							renderDoor(textureId,this.lx,this.ly,this.lz,block,tex_offset);
+							renderDoor(textureId,this.l.x,this.l.y,this.l.z,block,tex_offset);
 							break;
 						case STAIRS:
-							renderStairs(textureId,this.lx,this.ly,this.lz,this.lOffset);
+							renderStairs(textureId,this.l.x,this.l.y,this.l.z,this.lOffset);
 							break;
 						case SIGNPOST:
-							renderSignpost(textureId,this.lx,this.ly,this.lz);
+							renderSignpost(textureId,this.l.x,this.l.y,this.l.z);
 							break;
 						case WALLSIGN:
-							renderWallSign(textureId,this.lx,this.ly,this.lz);
+							renderWallSign(textureId,this.l.x,this.l.y,this.l.z);
 							break;
 						case FENCE:
-							renderFence(textureId,this.lx,this.ly,this.lz,this.lOffset,t);
+							renderFence(textureId,this.l.x,this.l.y,this.l.z,this.lOffset,t);
 							break;
 						case FENCE_GATE:
-							renderFenceGate(textureId,this.lx,this.ly,this.lz,this.lOffset);
+							renderFenceGate(textureId,this.l.x,this.l.y,this.l.z,this.lOffset);
 							break;
 						case LEVER:
-							renderLever(textureId,this.lx,this.ly,this.lz,block,tex_offset);
+							renderLever(textureId,this.l.x,this.l.y,this.l.z,block,tex_offset);
 							break;
 						case BUTTON:
-							renderButton(textureId,this.lx,this.ly,this.lz);
+							renderButton(textureId,this.l.x,this.l.y,this.l.z);
 							break;
 						case PORTAL:
-							renderPortal(textureId,this.lx,this.ly,this.lz,this.lOffset,t);
+							renderPortal(textureId,this.l.x,this.l.y,this.l.z,this.lOffset,t);
 							break;
 						case SNOW:
-							renderSnow(textureId,this.lx,this.ly,this.lz,this.lOffset,t);
+							renderSnow(textureId,this.l.x,this.l.y,this.l.z,this.lOffset,t);
 							break;
 						case BED:
-							renderBed(textureId,this.lx,this.ly,this.lz,block,tex_offset);
+							renderBed(textureId,this.l.x,this.l.y,this.l.z,block,tex_offset);
 							break;
 						case TRAPDOOR:
-							renderTrapdoor(textureId,this.lx,this.ly,this.lz);
+							renderTrapdoor(textureId,this.l.x,this.l.y,this.l.z);
 							break;
 						case PISTON_BODY:
-							renderPistonBody(textureId,this.lx,this.ly,this.lz,block,tex_offset);
+							renderPistonBody(textureId,this.l.x,this.l.y,this.l.z,block,tex_offset);
 							break;
 						case PISTON_HEAD:
-							renderPistonHead(textureId,this.lx,this.ly,this.lz,block,tex_offset,false,false);
+							renderPistonHead(textureId,this.l.x,this.l.y,this.l.z,block,tex_offset,false,false);
 							break;
 						case CAKE:
-							renderCake(textureId,this.lx,this.ly,this.lz,block,tex_offset);
+							renderCake(textureId,this.l.x,this.l.y,this.l.z,block,tex_offset);
 							break;
 						case VINE:
-							renderVine(textureId,this.lx,this.ly,this.lz,this.lOffset);
+							renderVine(textureId,this.l.x,this.l.y,this.l.z,this.lOffset);
 							break;
 						case SOLID_PANE:
-							renderSolidPane(textureId,this.lx,this.ly,this.lz,this.lOffset,t);
+							renderSolidPane(textureId,this.l.x,this.l.y,this.l.z,this.lOffset,t);
 							break;
 						case CHEST:
-							renderChest(textureId,this.lx,this.ly,this.lz,this.lOffset,block,tex_offset);
+							renderChest(textureId,this.l.x,this.l.y,this.l.z,this.lOffset,block,tex_offset);
 							break;
 						case STEM:
-							renderStem(textureId,this.lx,this.ly,this.lz,this.lOffset,block,tex_offset);
+							renderStem(textureId,this.l.x,this.l.y,this.l.z,this.lOffset,block,tex_offset);
 							break;
 						case HALFHEIGHT:
-							renderHalfHeight(textureId,this.lx,this.ly,this.lz,this.lOffset);
+							renderHalfHeight(textureId,this.l.x,this.l.y,this.l.z,this.lOffset);
 							break;
 						case CAULDRON:
-							renderCauldron(textureId,this.lx,this.ly,this.lz,this.lOffset,block,tex_offset);
+							renderCauldron(textureId,this.l.x,this.l.y,this.l.z,this.lOffset,block,tex_offset);
 							break;
 						case ENCHANTMENT_TABLE:
-							renderEnchantmentTable(textureId,this.lx,this.ly,this.lz,this.lOffset,block,tex_offset);
+							renderEnchantmentTable(textureId,this.l.x,this.l.y,this.l.z,this.lOffset,block,tex_offset);
 							break;
 						case BREWING_STAND:
-							renderBrewingStand(textureId,this.lx,this.ly,this.lz,block,tex_offset);
+							renderBrewingStand(textureId,this.l.x,this.l.y,this.l.z,block,tex_offset);
 							break;
 						case SEMISOLID:
 						case WATER:
 						case GLASS:
-							renderSemisolid(textureId,this.lx,this.ly,this.lz,this.lOffset,t);
+							renderSemisolid(textureId,this.l.x,this.l.y,this.l.z,this.lOffset,t);
 							break;
 						case END_PORTAL:
-							renderEndPortal(textureId,this.lx,this.ly,this.lz);
+							renderEndPortal(textureId,this.l.x,this.l.y,this.l.z);
 							break;
 						case END_PORTAL_FRAME:
-							renderEndPortalFrame(textureId,this.lx,this.ly,this.lz,this.lOffset,block,tex_offset);
+							renderEndPortalFrame(textureId,this.l.x,this.l.y,this.l.z,this.lOffset,block,tex_offset);
 							break;
 						case DRAGON_EGG:
-							renderDragonEgg(textureId,this.lx,this.ly,this.lz);
+							renderDragonEgg(textureId,this.l.x,this.l.y,this.l.z);
 							break;
 
 						case NORMAL:
@@ -4369,7 +4363,7 @@ public abstract class Chunk {
 							{
 								int TEX_HUGE_MUSHROOM_PORES = block.texture_extra_map.get("pores");
 								int TEX_HUGE_MUSHROOM_STEM = block.texture_extra_map.get("stem");
-								data = getData(this.lx, this.ly, this.lz);
+								data = getData(this.l.x, this.l.y, this.l.z);
 								switch (data)
 								{
 									case 0:
@@ -4453,7 +4447,7 @@ public abstract class Chunk {
 							// Now assign the textures for each face, if we're supposed to
 							if (block.texture_dir_map != null)
 							{
-								data = getData(this.lx, this.ly, this.lz);
+								data = getData(this.l.x, this.l.y, this.l.z);
 								BlockType.DIRECTION_ABS dir;
 								if (block.texture_dir_data_map != null && block.texture_dir_data_map.containsKey(data))
 								{
@@ -4598,7 +4592,7 @@ public abstract class Chunk {
 							// Finally, we're to the point of actually rendering the solid
 							if(pass != RENDER_PASS.SELECTED || highlightingOres)
 							{
-								this.renderBlockFace(curTexture, worldX+this.lx, this.ly, worldZ+this.lz, facingPass);
+								this.renderBlockFace(curTexture, worldX+this.l.x, this.l.y, worldZ+this.l.z, facingPass);
 							}
 							break;
 					}
@@ -4634,7 +4628,7 @@ public abstract class Chunk {
 			info = MinecraftConstants.paintings.get(painting.name.toLowerCase());
 			if (info == null)
 			{
-				XRay.logger.warn("Unknown painting name: " + painting.name);
+				Utility.logger.warn("Unknown painting name: " + painting.name);
 				continue;
 			}
 			
@@ -4772,8 +4766,8 @@ public abstract class Chunk {
 	 */
 	public void renderBorder()
 	{
-		float x = this.x*16-.49f;
-		float z = this.z*16-.49f;
+		float x = this.point.x*16-.49f;
+		float z = this.point.z*16-.49f;
 		float top = this.ceilingHeight + 1f;
 		float bottom = -1f;
 		float width = 15.98f;
@@ -4789,8 +4783,8 @@ public abstract class Chunk {
 	 */
 	public void renderSlimeBox()
 	{
-		float x = this.x*16-.48f;
-		float z = this.z*16-.48f;
+		float x = this.point.x*16-.48f;
+		float z = this.point.z*16-.48f;
 		float top = 40.51f;
 		float bottom = .49f;
 		float width = 15.94f;
@@ -4807,9 +4801,9 @@ public abstract class Chunk {
 	 */
 	protected void rewindLoop()
 	{
-		this.lx = 0;
-		this.ly = 0;
-		this.lz = 0;
+		this.l.x = 0;
+		this.l.y = 0;
+		this.l.z = 0;
 		this.lOffset = -1;
 	}
 

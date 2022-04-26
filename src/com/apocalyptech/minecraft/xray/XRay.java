@@ -26,6 +26,7 @@
  */
 package com.apocalyptech.minecraft.xray;
 
+import com.apocalyptech.minecraft.Point;
 import com.apocalyptech.minecraft.xray.MinecraftConstants.KEY_ACTION;
 import com.apocalyptech.minecraft.xray.dialog.JumpDialog;
 import com.apocalyptech.minecraft.xray.dialog.ResolutionDialog;
@@ -69,11 +70,6 @@ import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.util.glu.Sphere;
 
-import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
-
-import com.apocalyptech.minecraft.xray.Block;
-import com.apocalyptech.minecraft.xray.WorldInfo;
 import static com.apocalyptech.minecraft.xray.MinecraftConstants.*;
 
 public class XRay
@@ -82,18 +78,9 @@ public class XRay
 	// number of chunks around the camera which are visible (Square)
 	private int visible_chunk_range = 5;
 
-	private static final int[] CHUNK_RANGES_KEYS = new int[6];
-	private static final int[] CHUNK_RANGES = new int[] { 3, 4, 5, 6, 7, 8 };
 	private int currentChunkRange = 4;
 
-	// highlight distance
-	private static final int[] HIGHLIGHT_RANGES_KEYS = new int[7];
-	private static final int[] HIGHLIGHT_RANGES = new int[] { 2, 3, 4, 5, 6, 7, 8 };
 	private int currentHighlightDistance = 1;
-
-	// ore highlight vars
-	private static short[] HIGHLIGHT_ORES = new short[preferred_highlight_ores.length];
-	private static final int[] HIGHLIGHT_ORE_KEYS = new int[preferred_highlight_ores.length];
 
 	// By default we'll keep 20x20 chunks in our cache, which should hopefully let
 	// us stay ahead of the camera
@@ -106,18 +93,10 @@ public class XRay
 	private boolean fullscreen = false;
 	// are we inverting the mouse
 	private boolean invertMouse = false;
-	// window title
-	public static String app_version = "3.6.2";
-	public static String app_name    = "Minecraft X-Ray";
-	public static String windowTitle = app_name + " " + app_version;
 
 	// Minimap size - I did try increasing this but there were some performance
 	// issues
-	/*private final int minimap_dim = 2048;
-	private final float minimap_dim_f = (float) minimap_dim;
-	private final int minimap_dim_h = minimap_dim / 2;
-	private final float minimap_dim_h_f = (float) minimap_dim_h;
-	private boolean minimap_needs_updating = false;*/
+
 	private Minimap minimap = new Minimap(false);
 
 	// current display mode
@@ -131,8 +110,7 @@ public class XRay
 	private boolean camera_lock = false;
 
 	// the current mouseX and mouseY on the screen
-	private int mouseX;
-	private int mouseY;
+	private Point mouse = new Point();
 
 	// the sprite sheet for all textures
 	public ArrayList<Texture> minecraftTextures;
@@ -167,7 +145,6 @@ public class XRay
 			this.reportColor = reportColor;
 		}
 	}
-	private static final HIGHLIGHT_TYPE defaultHighlightOre = HIGHLIGHT_TYPE.DISCO;
 
 	// Toggles that need to be available to the renderers
 	public static class RenderToggles
@@ -176,21 +153,20 @@ public class XRay
 		public boolean render_water = true;
 		public boolean highlight_explored = false;
 		public boolean beta19_fences = true;
-		public HIGHLIGHT_TYPE highlightOres = defaultHighlightOre;
+		public HIGHLIGHT_TYPE highlightOres = Utility.defaultHighlightOre;
 	}
-	public static RenderToggles toggle = new RenderToggles();
 
 	// the minecraft level we are exploring
 	private MinecraftLevel level;
 
 	// the current block (universal coordinate) where the camera is hovering on
-	private int levelBlockX, levelBlockZ;
+	private Point levelBlock = new Point();
 
 	// The same, but as a float, to more accurately show what Minecraft itself shows
-	private float reportBlockX, reportBlockZ;
+	private FloatPoint reportBlock = new FloatPoint();
 
 	// the current and previous chunk coordinates where the camera is hovering on
-	private int currentLevelX, currentLevelZ;
+	private Point currentLevel = new Point();
 
 	// we render to a display list and use that later for quick drawing, this is the index
 	@SuppressWarnings("unused")
@@ -205,8 +181,7 @@ public class XRay
 	private int screenWidth, screenHeight;
 
 	// the current camera position
-	private float currentCameraPosX;
-	private float currentCameraPosZ;
+	private FloatPoint currentCameraPos = new FloatPoint();
 
 	// wheter we show the big map or the mini map
 	private boolean mapBig = false;
@@ -277,21 +252,11 @@ public class XRay
 	// Slime chunk rendering status
 	private boolean renderSlimeChunks = false;
 
-	// Sphere vars
-	/*private boolean draw_sphere = false;
-	private boolean set_sphere_center = false;
-	private int draw_sphere_radius_min = 8;
-	private int draw_sphere_radius_max = 128;
-	private int draw_sphere_radius_inc = 8;
-	private int draw_sphere_radius = draw_sphere_radius_min + (draw_sphere_radius_inc*2);
-	private float sphere_x = 0f;
-	private float sphere_y = 0f;
-	private float sphere_z = 0f;*/
+	// Sphere
 	private XSphere sphere = new XSphere(false, false, 8, 128, 8, 0f, 0f, 0f);
 
 	// vars to keep track of our current chunk coordinates
-	private int cur_chunk_x = 0;
-	private int cur_chunk_z = 0;
+	private Point cur_chunk = new Point(0,0);
 	private boolean first_run = true;
 	private boolean initial_load_done = false;
 	private boolean initial_load_queued = false;
@@ -316,20 +281,16 @@ public class XRay
 	public boolean jump_dialog_trigger = false;
 	public int open_dialog_trigger = 0;
 
-	public static HashMap<Integer, TextureDecorationStats> decorationStats;
-
-	public static Logger logger = Logger.getLogger(XRay.class);
-
 	// lets start with the program
 	public static void main(String args[])
 	{
 		//PropertyConfigurator.configure("xray-log4j.properties");
 		Date now = new Date();
-		logger.info("Starting " + windowTitle + " at " + now.toString());
-		logger.info("LWJGL version " + Sys.getVersion());
-		logger.info("JVM version " + System.getProperty("java.version"));
-		logger.info("Detected OS " + MinecraftEnvironment.os.toString());
-		logger.info("");
+		Utility.logger.info("Starting " + Utility.windowTitle + " at " + now.toString());
+		Utility.logger.info("LWJGL version " + Sys.getVersion());
+		Utility.logger.info("JVM version " + System.getProperty("java.version"));
+		Utility.logger.info("Detected OS " + MinecraftEnvironment.os.toString());
+		Utility.logger.info("");
 		new XRay().run();
 	}
 
@@ -351,7 +312,7 @@ public class XRay
 
 		// This was moved from initialize() because we want to have this variable
 		// available for loadOptionStates(), which happens first.
-		mineralToggle = new boolean[HIGHLIGHT_ORES.length];
+		mineralToggle = new boolean[Utility.HIGHLIGHT_ORES.length];
 
 		try
 		{
@@ -497,7 +458,7 @@ public class XRay
 			catch (IOException e)
 			{
 				// Just report and continue
-				logger.warn("Could not load configuration file: " + e.toString());
+				Utility.logger.warn("Could not load configuration file: " + e.toString());
 			}
 		}
 
@@ -520,7 +481,7 @@ public class XRay
 				{
 					// TODO: Should output something more visible to the user
 					error = "Key '" + prefskey + "' for action " + action + " is unknown.  Default key '" + Keyboard.getKeyName(key_mapping.get(action)) + "' assigned.";
-					logger.warn(error);
+					Utility.logger.warn(error);
 					errors.add(error);
 					continue;
 				}
@@ -530,17 +491,17 @@ public class XRay
 
 		// Populate our key ranges
 		int i;
-		for (i = 0; i < CHUNK_RANGES.length; i++)
+		for (i = 0; i < Utility.CHUNK_RANGES.length; i++)
 		{
-			CHUNK_RANGES_KEYS[i] = this.key_mapping.get(KEY_ACTION.valueOf("CHUNK_RANGE_" + (i + 1)));
+			Utility.CHUNK_RANGES_KEYS[i] = this.key_mapping.get(KEY_ACTION.valueOf("CHUNK_RANGE_" + (i + 1)));
 		}
-		for (i = 0; i < HIGHLIGHT_RANGES.length; i++)
+		for (i = 0; i < Utility.HIGHLIGHT_RANGES.length; i++)
 		{
-			HIGHLIGHT_RANGES_KEYS[i] = this.key_mapping.get(KEY_ACTION.valueOf("HIGHLIGHT_RANGE_" + (i + 1)));
+			Utility.HIGHLIGHT_RANGES_KEYS[i] = this.key_mapping.get(KEY_ACTION.valueOf("HIGHLIGHT_RANGE_" + (i + 1)));
 		}
-		for (i = 0; i < HIGHLIGHT_ORES.length; i++)
+		for (i = 0; i < Utility.HIGHLIGHT_ORES.length; i++)
 		{
-			HIGHLIGHT_ORE_KEYS[i] = this.key_mapping.get(KEY_ACTION.valueOf("TOGGLE_ORE_" + (i + 1)));
+			Utility.HIGHLIGHT_ORE_KEYS[i] = this.key_mapping.get(KEY_ACTION.valueOf("TOGGLE_ORE_" + (i + 1)));
 		}
 
 		// Populate our list of ores to highlight
@@ -554,17 +515,17 @@ public class XRay
 			{
 				try
 				{
-					HIGHLIGHT_ORES[i] = blockCollection.getByName(prefs_highlight).id;
+					Utility.HIGHLIGHT_ORES[i] = blockCollection.getByName(prefs_highlight).id;
 				}
 				catch (Exception e)
 				{
 					// no worries, just populate with our default
-					error = "Block type '" + prefs_highlight + "', for HIGHLIGHT_" + (i+1) + " is an unknown block.  Reverting to default: " + blockArray[HIGHLIGHT_ORES[i]].idStr;
-					logger.warn(error);
+					error = "Block type '" + prefs_highlight + "', for HIGHLIGHT_" + (i+1) + " is an unknown block.  Reverting to default: " + blockArray[Utility.HIGHLIGHT_ORES[i]].idStr;
+					Utility.logger.warn(error);
 					errors.add(error);
 				}
 			}
-			xray_properties.put(prefs_highlight_key, blockArray[HIGHLIGHT_ORES[i]].idStr);
+			xray_properties.put(prefs_highlight_key, blockArray[Utility.HIGHLIGHT_ORES[i]].idStr);
 		}
 
 		// Read in our saved option states, if we have 'em
@@ -606,9 +567,9 @@ public class XRay
 	 */
 	public void updateHighlightBindings()
 	{
-		for (int i=0; i < HIGHLIGHT_ORES.length; i++)
+		for (int i=0; i < Utility.HIGHLIGHT_ORES.length; i++)
 		{
-			xray_properties.setProperty("HIGHLIGHT_" + (i+1), blockArray[HIGHLIGHT_ORES[i]].idStr);
+			xray_properties.setProperty("HIGHLIGHT_" + (i+1), blockArray[Utility.HIGHLIGHT_ORES[i]].idStr);
 		}
 		this.savePreferences();
 
@@ -630,7 +591,7 @@ public class XRay
 		catch (IOException e)
 		{
 			// Just report on the console and move on
-			logger.error("Could not save preferences to file: " + e.toString());
+			Utility.logger.error("Could not save preferences to file: " + e.toString());
 		}
 	}
 
@@ -649,7 +610,7 @@ public class XRay
 		// Then populate our highlight blocks
 		for (int i = 0; i < preferred_highlight_ores.length; i++)
 		{
-			XRay.HIGHLIGHT_ORES[i] = blockCollection.getByName(preferred_highlight_ores[i]).id;
+			Utility.HIGHLIGHT_ORES[i] = blockCollection.getByName(preferred_highlight_ores[i]).id;
 		}
 	}
 
@@ -707,7 +668,7 @@ public class XRay
 		{
 			// Load and draw the chunk
 			b = (Block) mapChunksToLoad.removeFirst();
-			// logger.debug("Loading chunk " + b.x + "," + b.z);
+			// Utility.logger.debug("Loading chunk " + b.x + "," + b.z);
 
 			// There may be some circumstances where a chunk we're going to load is already loaded.
 			// Mostly while moving diagonally, I think. I'm actually not convinced that it's worth
@@ -979,8 +940,9 @@ public class XRay
 		}
 
 		// level data
-		levelBlockX = Integer.MIN_VALUE;
-		levelBlockZ = Integer.MIN_VALUE;
+		/*levelBlockX = Integer.MIN_VALUE;
+		levelBlockZ = Integer.MIN_VALUE;*/
+		levelBlock = new Point(Integer.MIN_VALUE, Integer.MIN_VALUE);
 	}
 
 	/***
@@ -992,7 +954,7 @@ public class XRay
 	{
 		// init the precalc tables
 
-		mineralToggleTextures = new Texture[HIGHLIGHT_ORES.length];
+		mineralToggleTextures = new Texture[Utility.HIGHLIGHT_ORES.length];
 
 		// world display list
 		worldDisplayListNum = GL11.glGenLists(1);
@@ -1039,7 +1001,7 @@ public class XRay
 			}
 
 			// Compute some information about some decorative textures
-			decorationStats = new HashMap<Integer, TextureDecorationStats>();
+			Utility.decorationStats = new HashMap<Integer, TextureDecorationStats>();
 			for (BLOCK_TYPE decBlockType : DECORATION_BLOCKS)
 			{
 				for (BlockType decBlock : reverse_block_type_map.get(decBlockType))
@@ -1049,9 +1011,9 @@ public class XRay
 					{
 						for (int textureId : decBlock.texture_data_map.values())
 						{
-							if (!decorationStats.containsKey(textureId))
+							if (!Utility.decorationStats.containsKey(textureId))
 							{
-								decorationStats.put(textureId, new TextureDecorationStats(minecraftTexture, textureId));
+								Utility.decorationStats.put(textureId, new TextureDecorationStats(minecraftTexture, textureId));
 							}
 						}
 					}
@@ -1061,9 +1023,9 @@ public class XRay
 					{
 						for (int textureId : decBlock.texture_dir_map.values())
 						{
-							if (!decorationStats.containsKey(textureId))
+							if (!Utility.decorationStats.containsKey(textureId))
 							{
-								decorationStats.put(textureId, new TextureDecorationStats(minecraftTexture, textureId));
+								Utility.decorationStats.put(textureId, new TextureDecorationStats(minecraftTexture, textureId));
 							}
 						}
 					}
@@ -1074,18 +1036,18 @@ public class XRay
 						for (String key : blockTypeExtraTexturesReq.get(decBlock.type))
 						{
 							int textureId = decBlock.texture_extra_map.get(key);
-							if (!decorationStats.containsKey(textureId))
+							if (!Utility.decorationStats.containsKey(textureId))
 							{
-								decorationStats.put(textureId, new TextureDecorationStats(minecraftTexture, textureId));
+								Utility.decorationStats.put(textureId, new TextureDecorationStats(minecraftTexture, textureId));
 							}
 						}
 					}
 
 					// Now the "base" texture, if we didn't already do it
-					if (!decorationStats.containsKey(decBlock.tex_idx))
+					if (!Utility.decorationStats.containsKey(decBlock.tex_idx))
 					{
 						int textureId = decBlock.tex_idx;
-						decorationStats.put(textureId, new TextureDecorationStats(minecraftTexture, textureId));
+						Utility.decorationStats.put(textureId, new TextureDecorationStats(minecraftTexture, textureId));
 					}
 				}
 			}
@@ -1153,13 +1115,13 @@ public class XRay
 	private void updateOreHighlightTextures()
 		throws IOException
 	{
-		for (int i = 0; i < HIGHLIGHT_ORES.length; i++)
+		for (int i = 0; i < Utility.HIGHLIGHT_ORES.length; i++)
 		{
 			mineralToggleTextures[i] = TextureTool.allocateTexture(128, 32);
 			Graphics2D g = mineralToggleTextures[i].getImage().createGraphics();
 			g.setFont(ARIALFONT);
 			g.setColor(Color.white);
-			g.drawString("[F" + (i + 1) + "] " + blockArray[HIGHLIGHT_ORES[i]].name, 0, 16);
+			g.drawString("[F" + (i + 1) + "] " + blockArray[Utility.HIGHLIGHT_ORES[i]].name, 0, 16);
 			mineralToggleTextures[i].update();
 		}
 		this.regenerateOreHighlightTexture = false;
@@ -1252,7 +1214,7 @@ public class XRay
 		}
 
 		// Open our main dialog and see how it turns out.
-		if (ResolutionDialog.presentDialog(windowTitle, availableWorlds, xray_properties) == ResolutionDialog.DIALOG_BUTTON_EXIT)
+		if (ResolutionDialog.presentDialog(Utility.windowTitle, availableWorlds, xray_properties) == ResolutionDialog.DIALOG_BUTTON_EXIT)
 		{
 			System.exit(0);
 		}
@@ -1273,7 +1235,7 @@ public class XRay
 		Display.setFullscreen(fullscreen);
 		displayMode = ResolutionDialog.selectedDisplayMode;
 		Display.setDisplayMode(displayMode);
-		Display.setTitle(windowTitle);
+		Display.setTitle(Utility.windowTitle);
 		// TODO: actually do what the user requests here
 		Display.setVSyncEnabled(true);
 		Display.create();
@@ -1288,19 +1250,19 @@ public class XRay
 	{
 		if (MinecraftEnvironment.getMinecraftDirectory() == null)
 		{
-			logger.error("OS not supported (" + System.getProperty("os.name") + ")");
+			Utility.logger.error("OS not supported (" + System.getProperty("os.name") + ")");
 			JOptionPane.showMessageDialog(null, "OS not supported (" + System.getProperty("os.name") + "), please report.", "Minecraft X-Ray Error", JOptionPane.ERROR_MESSAGE);
 			System.exit(0);
 		}
 		if (!MinecraftEnvironment.getMinecraftDirectory().exists())
 		{
-			logger.error("Minecraft directory not found: " + MinecraftEnvironment.getMinecraftDirectory().getAbsolutePath());
+			Utility.logger.error("Minecraft directory not found: " + MinecraftEnvironment.getMinecraftDirectory().getAbsolutePath());
 			JOptionPane.showMessageDialog(null, "Minecraft directory not found: " + MinecraftEnvironment.getMinecraftDirectory().getAbsolutePath(), "Minecraft X-Ray Error", JOptionPane.ERROR_MESSAGE);
 			System.exit(0);
 		}
 		if (!MinecraftEnvironment.getMinecraftDirectory().canRead())
 		{
-			logger.error("Minecraft directory not readable: " + MinecraftEnvironment.getMinecraftDirectory().getAbsolutePath());
+			Utility.logger.error("Minecraft directory not readable: " + MinecraftEnvironment.getMinecraftDirectory().getAbsolutePath());
 			JOptionPane.showMessageDialog(null, "Minecraft directory not readable: " + MinecraftEnvironment.getMinecraftDirectory().getAbsolutePath(), "Minecraft X-Ray Error",
 					JOptionPane.ERROR_MESSAGE);
 			System.exit(0);
@@ -1314,8 +1276,8 @@ public class XRay
 
 	private void setChunkRange(int n)
 	{
-		if (n >= CHUNK_RANGES.length)
-			n = CHUNK_RANGES.length - 1;
+		if (n >= Utility.CHUNK_RANGES.length)
+			n = Utility.CHUNK_RANGES.length - 1;
 		if (n <= 0)
 			n = 0;
 		if (n != currentChunkRange)
@@ -1323,13 +1285,13 @@ public class XRay
 			this.needToReloadWorld = true;
 		}
 		this.currentChunkRange = n;
-		this.visible_chunk_range = CHUNK_RANGES[n];
+		this.visible_chunk_range = Utility.CHUNK_RANGES[n];
 	}
 
 	private void setHighlightRange(int n)
 	{
-		if (n >= HIGHLIGHT_RANGES.length)
-			n = HIGHLIGHT_RANGES.length - 1;
+		if (n >= Utility.HIGHLIGHT_RANGES.length)
+			n = Utility.HIGHLIGHT_RANGES.length - 1;
 		if (n <= 0)
 			n = 0;
 		if (n == currentHighlightDistance)
@@ -1373,7 +1335,7 @@ public class XRay
 	private void setMinecraftWorld(WorldInfo world)
 	{
 		this.world = world;
-		this.level = new MinecraftLevel(world, minecraftTextures, paintingTexture, HIGHLIGHT_ORES);
+		this.level = new MinecraftLevel(world, minecraftTextures, paintingTexture, Utility.HIGHLIGHT_ORES);
 
 		// determine which chunks are available in this world
 		mapChunksToLoad = new LinkedList<Block>();
@@ -1425,7 +1387,7 @@ public class XRay
 	private void setMinecraftWorld(WorldInfo world, FirstPersonCameraController camera)
 	{
 		this.world = world;
-		this.level = new MinecraftLevel(world, minecraftTextures, paintingTexture, HIGHLIGHT_ORES);
+		this.level = new MinecraftLevel(world, minecraftTextures, paintingTexture, Utility.HIGHLIGHT_ORES);
 
 		// determine which chunks are available in this world
 		mapChunksToLoad = new LinkedList<Block>();
@@ -1501,7 +1463,7 @@ public class XRay
 		// Make sure our availableWorlds array has a "clean" "Other" option
 		availableWorlds.set(availableWorlds.size()-1, new WorldInfo());
 		Mouse.setGrabbed(false);
-		if (ResolutionDialog.presentDialog(windowTitle, availableWorlds, xray_properties, false) == ResolutionDialog.DIALOG_BUTTON_EXIT)
+		if (ResolutionDialog.presentDialog(Utility.windowTitle, availableWorlds, xray_properties, false) == ResolutionDialog.DIALOG_BUTTON_EXIT)
 		{
 			Mouse.setGrabbed(true);
 			return;
@@ -1540,7 +1502,7 @@ public class XRay
 	private void launchBlockBindDialog()
 	{
 		Mouse.setGrabbed(false);
-		BlockBindDialog.presentDialog(HIGHLIGHT_ORES, minecraftTextures, this);
+		BlockBindDialog.presentDialog(Utility.HIGHLIGHT_ORES, minecraftTextures, this);
 	}
 
 	/**
@@ -1612,8 +1574,8 @@ public class XRay
 		if (initial_load_queued)
 		{
 			Chunk tempchunk;
-			int dx = chunkX - cur_chunk_x;
-			int dz = chunkZ - cur_chunk_z;
+			int dx = chunkX - cur_chunk.x;
+			int dz = chunkZ - cur_chunk.z;
 
 			int top_x = 0;
 			int bot_x = 0;
@@ -1623,15 +1585,15 @@ public class XRay
 			// X
 			if (dx < 0)
 			{
-				// logger.trace("Loading in chunks from the X range " + (cur_chunk_x-1-loadChunkRange) + " to " + (chunkX-loadChunkRange) + " (going down)");
-				top_x = cur_chunk_x - 1 - loadChunkRange;
+				// Utility.logger.trace("Loading in chunks from the X range " + (cur_chunk_x-1-loadChunkRange) + " to " + (chunkX-loadChunkRange) + " (going down)");
+				top_x = cur_chunk.x - 1 - loadChunkRange;
 				bot_x = chunkX - loadChunkRange;
 			}
 			else if (dx > 0)
 			{
-				// logger.trace("Loading in chunks from the X range " + (cur_chunk_x+1+loadChunkRange) + " to " + (chunkX+loadChunkRange) + " (going up)");
+				// Utility.logger.trace("Loading in chunks from the X range " + (cur_chunk_x+1+loadChunkRange) + " to " + (chunkX+loadChunkRange) + " (going up)");
 				top_x = chunkX + loadChunkRange;
-				bot_x = cur_chunk_x + 1 + loadChunkRange;
+				bot_x = cur_chunk.x + 1 + loadChunkRange;
 			}
 			if (dx != 0)
 			{
@@ -1661,15 +1623,15 @@ public class XRay
 			// Z
 			if (dz < 0)
 			{
-				// logger.trace("Loading in chunks from the Z range " + (cur_chunk_z-1-loadChunkRange) + " to " + (chunkZ-loadChunkRange) + " (going down)");
-				top_z = cur_chunk_z - 1 - loadChunkRange;
+				// Utility.logger.trace("Loading in chunks from the Z range " + (cur_chunk_z-1-loadChunkRange) + " to " + (chunkZ-loadChunkRange) + " (going down)");
+				top_z = cur_chunk.z - 1 - loadChunkRange;
 				bot_z = chunkZ - loadChunkRange;
 			}
 			else if (dz > 0)
 			{
-				// logger.trace("Loading in chunks from the Z range " + (cur_chunk_z+1+loadChunkRange) + " to " + (chunkZ+loadChunkRange) + " (going up)");
+				// Utility.logger.trace("Loading in chunks from the Z range " + (cur_chunk_z+1+loadChunkRange) + " to " + (chunkZ+loadChunkRange) + " (going up)");
 				top_z = chunkZ + loadChunkRange;
-				bot_z = cur_chunk_z + 1 + loadChunkRange;
+				bot_z = cur_chunk.z + 1 + loadChunkRange;
 			}
 			if (dz != 0)
 			{
@@ -1705,7 +1667,7 @@ public class XRay
 			{
 				if (total_dX < 0)
 				{
-					// logger.trace("Clearing X from " + (chunkX-minimap_trim_chunk_distance+minimap_trim_chunks) + " to " + (chunkX-minimap_trim_chunk_distance));
+					// Utility.logger.trace("Clearing X from " + (chunkX-minimap_trim_chunk_distance+minimap_trim_chunks) + " to " + (chunkX-minimap_trim_chunk_distance));
 					for (i = chunkX - minimap_trim_chunk_distance + minimap_trim_chunks; i >= chunkX - minimap_trim_chunk_distance; i--)
 					{
 						trimList.addAll(level.removeChunkRowXFromMinimap(i));
@@ -1714,7 +1676,7 @@ public class XRay
 				}
 				else
 				{
-					// logger.trace("Clearing X from " + (chunkX+minimap_trim_chunk_distance-minimap_trim_chunks) + " to " + (chunkX+minimap_trim_chunk_distance));
+					// Utility.logger.trace("Clearing X from " + (chunkX+minimap_trim_chunk_distance-minimap_trim_chunks) + " to " + (chunkX+minimap_trim_chunk_distance));
 					for (i = chunkX + minimap_trim_chunk_distance - minimap_trim_chunks; i <= chunkX + minimap_trim_chunk_distance; i++)
 					{
 						trimList.addAll(level.removeChunkRowXFromMinimap(i));
@@ -1726,7 +1688,7 @@ public class XRay
 			{
 				if (total_dZ < 0)
 				{
-					// logger.trace("Clearing Z from " + (chunkZ-minimap_trim_chunk_distance+minimap_trim_chunks) + " to " + (chunkZ-minimap_trim_chunk_distance));
+					// Utility.logger.trace("Clearing Z from " + (chunkZ-minimap_trim_chunk_distance+minimap_trim_chunks) + " to " + (chunkZ-minimap_trim_chunk_distance));
 					for (i = chunkZ - minimap_trim_chunk_distance + minimap_trim_chunks; i >= chunkZ - minimap_trim_chunk_distance; i--)
 					{
 						trimList.addAll(level.removeChunkRowZFromMinimap(i));
@@ -1735,7 +1697,7 @@ public class XRay
 				}
 				else
 				{
-					// logger.trace("Clearing Z from " + (chunkZ+minimap_trim_chunk_distance-minimap_trim_chunks) + " to " + (chunkZ+minimap_trim_chunk_distance));
+					// Utility.logger.trace("Clearing Z from " + (chunkZ+minimap_trim_chunk_distance-minimap_trim_chunks) + " to " + (chunkZ+minimap_trim_chunk_distance));
 					for (i = chunkZ + minimap_trim_chunk_distance - minimap_trim_chunks; i <= chunkZ + minimap_trim_chunk_distance; i++)
 					{
 						trimList.addAll(level.removeChunkRowZFromMinimap(i));
@@ -1748,7 +1710,7 @@ public class XRay
 		}
 		else
 		{
-			// logger.trace("Loading world from X: " + (chunkX-loadChunkRange) + " - " + (chunkX+loadChunkRange) + ", Z: " + (chunkZ-loadChunkRange) + " - " + (chunkZ+loadChunkRange));
+			// Utility.logger.trace("Loading world from X: " + (chunkX-loadChunkRange) + " - " + (chunkX+loadChunkRange) + ", Z: " + (chunkZ-loadChunkRange) + " - " + (chunkZ+loadChunkRange));
 			for (int lx = chunkX - loadChunkRange; lx <= chunkX + loadChunkRange; lx++)
 			{
 				for (int lz = chunkZ - loadChunkRange; lz <= chunkZ + loadChunkRange; lz++)
@@ -1759,8 +1721,8 @@ public class XRay
 			}
 			initial_load_queued = true;
 		}
-		cur_chunk_x = chunkX;
-		cur_chunk_z = chunkZ;
+		cur_chunk.x = chunkX;
+		cur_chunk.z = chunkZ;
 	}
 
 	/***
@@ -1774,21 +1736,21 @@ public class XRay
 		int key;
 
 		// distance in mouse movement from the last getDX() call.
-		mouseX = Mouse.getDX();
+		mouse.x = Mouse.getDX();
 		// distance in mouse movement from the last getDY() call.
-		mouseY = Mouse.getDY();
+		mouse.y = Mouse.getDY();
 
 		// we are on the main world screen or the level loading screen update the camera (but only if the mouse is grabbed)
 		if (Mouse.isGrabbed())
 		{
-			camera.incYaw(mouseX * MOUSE_SENSITIVITY);
+			camera.incYaw(mouse.x * MOUSE_SENSITIVITY);
 			if (invertMouse)
 			{
-				camera.incPitch(mouseY * MOUSE_SENSITIVITY);
+				camera.incPitch(mouse.y * MOUSE_SENSITIVITY);
 			}
 			else
 			{
-				camera.incPitch(-mouseY * MOUSE_SENSITIVITY);
+				camera.incPitch(-mouse.y * MOUSE_SENSITIVITY);
 			}
 		}
 
@@ -1886,7 +1848,7 @@ public class XRay
 					boolean have_off = false;
 					for (HIGHLIGHT_TYPE type : HIGHLIGHT_TYPE.values())
 					{
-						if (type == toggle.highlightOres)
+						if (type == Utility.toggle.highlightOres)
 						{
 							found = true;
 							if (type == HIGHLIGHT_TYPE.OFF)
@@ -1896,7 +1858,7 @@ public class XRay
 						}
 						else if (found)
 						{
-							toggle.highlightOres = type;
+							Utility.toggle.highlightOres = type;
 							set = true;
 							if (type == HIGHLIGHT_TYPE.OFF)
 							{
@@ -1907,7 +1869,7 @@ public class XRay
 					}
 					if (!set)
 					{
-						toggle.highlightOres = HIGHLIGHT_TYPE.DISCO;
+						Utility.toggle.highlightOres = HIGHLIGHT_TYPE.DISCO;
 					}
 					updateRenderDetails();
 					if (have_off)
@@ -1973,28 +1935,28 @@ public class XRay
 				else if (key == key_mapping.get(KEY_ACTION.TOGGLE_BEDROCK))
 				{
 					// Toggle bedrock rendering
-					toggle.render_bedrock = !toggle.render_bedrock;
+					Utility.toggle.render_bedrock = !Utility.toggle.render_bedrock;
 					invalidateSelectedChunks(true);
 					updateRenderDetails();
 				}
 				else if (key == key_mapping.get(KEY_ACTION.TOGGLE_HIGHLIGHT_EXPLORED))
 				{
 					// Toggle explored-area highlighting
-					toggle.highlight_explored = !toggle.highlight_explored;
+					Utility.toggle.highlight_explored = !Utility.toggle.highlight_explored;
 					invalidateSelectedChunks(true);
 					updateRenderDetails();
 				}
 				else if (key == key_mapping.get(KEY_ACTION.TOGGLE_WATER))
 				{
 					// Toggle water rendering
-					toggle.render_water = !toggle.render_water;
+					Utility.toggle.render_water = !Utility.toggle.render_water;
 					invalidateSelectedChunks(true);
 					updateRenderDetails();
 				}
 				else if (key == key_mapping.get(KEY_ACTION.TOGGLE_BETA19_FENCES))
 				{
 					// Toggle "new" fence rendering
-					toggle.beta19_fences = !toggle.beta19_fences;
+					Utility.toggle.beta19_fences = !Utility.toggle.beta19_fences;
 					invalidateSelectedChunks(true);
 					updateRenderDetails();
 				}
@@ -2073,7 +2035,7 @@ public class XRay
 					BufferedImage bi = minimapTexture.getImage();
 					try {
 						ImageIO.write(bi, "PNG", new File("/home/pez/xray.png"));
-						logger.info("Wrote minimap to disk.");
+						Utility.logger.info("Wrote minimap to disk.");
 					}
 					catch (Exception e)
 					{
@@ -2087,7 +2049,7 @@ public class XRay
 					needToReloadWorld = false;
 					for (int i = 0; i < mineralToggle.length; i++)
 					{
-						if (key == HIGHLIGHT_ORE_KEYS[i])
+						if (key == Utility.HIGHLIGHT_ORE_KEYS[i])
 						{
 							mineralToggle[i] = !mineralToggle[i];
 							needToReloadWorld = true;
@@ -2099,9 +2061,9 @@ public class XRay
 					}
 
 					// Handle changing chunk ranges (how far out we draw from the camera
-					for (int i = 0; i < CHUNK_RANGES.length; i++)
+					for (int i = 0; i < Utility.CHUNK_RANGES.length; i++)
 					{
-						if (key == CHUNK_RANGES_KEYS[i])
+						if (key == Utility.CHUNK_RANGES_KEYS[i])
 						{
 							setChunkRange(i);
 							updateRenderDetails();
@@ -2109,9 +2071,9 @@ public class XRay
 					}
 
 					// Handle changing the ore highlight distances
-					for (int i = 0; i < HIGHLIGHT_RANGES.length; i++)
+					for (int i = 0; i < Utility.HIGHLIGHT_RANGES.length; i++)
 					{
-						if (key == HIGHLIGHT_RANGES_KEYS[i])
+						if (key == Utility.HIGHLIGHT_RANGES_KEYS[i])
 						{
 							setHighlightRange(i);
 							updateRenderDetails();
@@ -2344,13 +2306,13 @@ public class XRay
 	 */
 	private void jumpToNearestLoaded()
 	{
-		Chunk k = level.getChunk(currentLevelX, currentLevelZ);
+		Chunk k = level.getChunk(currentLevel.x, currentLevel.z);
 		if (k == null)
 		{
-			IntegerPair coords = MinecraftEnvironment.getClosestRegion(world, currentLevelX, currentLevelZ);
+			IntegerPair coords = MinecraftEnvironment.getClosestRegion(world, currentLevel.x, currentLevel.z);
 			if (coords == null)
 			{
-				logger.error("Couldn't find a chunk to jump to for Nearest Chunk match");
+				Utility.logger.error("Couldn't find a chunk to jump to for Nearest Chunk match");
 				Mouse.setGrabbed(false);
 				WarningDialog.presentDialog("No Chunks Found",
 					"X-Ray couldn't find any chunks to jump to.  This generally means that the map doesn't actually have data in it yet.",
@@ -2446,7 +2408,7 @@ public class XRay
 
 	/***
 	 * Main render loop
-	 * 
+	 *
 	 * @param timeDelta
 	 * @return
 	 */
@@ -2471,41 +2433,41 @@ public class XRay
 		// change the camera to point a the right direction
 		camera.applyCameraTransformation();
 
-		currentCameraPosX = -camera.getPosition().x;
-		currentCameraPosZ = -camera.getPosition().z;
-		reportBlockX = currentCameraPosX+.5f;
-		reportBlockZ = currentCameraPosZ+.5f;
-		int tempX = (int)Math.floor(reportBlockX);
-		int tempZ = (int)Math.floor(reportBlockZ);
+		currentCameraPos.x = -camera.getPosition().x;
+		currentCameraPos.z = -camera.getPosition().z;
+		reportBlock.x = currentCameraPos.x+.5f;
+		reportBlock.z = currentCameraPos.z+.5f;
+		int tempX = (int)Math.floor(reportBlock.x);
+		int tempZ = (int)Math.floor(reportBlock.z);
 
 		// determine if we need to load new map chunks
-		if (tempX != levelBlockX || tempZ != levelBlockZ || needToReloadWorld)
+		if (tempX != levelBlock.x || tempZ != levelBlock.z || needToReloadWorld)
 		{
-			levelBlockX = tempX;
-			levelBlockZ = tempZ;
-			currentLevelX = level.getChunkX(levelBlockX);
-			currentLevelZ = level.getChunkZ(levelBlockZ);
+			levelBlock.x = tempX;
+			levelBlock.z = tempZ;
+			currentLevel.x = level.getChunkX(levelBlock.x);
+			currentLevel.z = level.getChunkZ(levelBlock.z);
 		}
 
 		// Set our range for chunks to highlight
 		int highlight_chunk_range = visible_chunk_range;
-		if (HIGHLIGHT_RANGES[currentHighlightDistance] < highlight_chunk_range)
+		if (Utility.HIGHLIGHT_RANGES[currentHighlightDistance] < highlight_chunk_range)
 		{
-			highlight_chunk_range = HIGHLIGHT_RANGES[currentHighlightDistance];
+			highlight_chunk_range = Utility.HIGHLIGHT_RANGES[currentHighlightDistance];
 		}
 
 		// Get a list of chunks that we'll iterate over, on our various passes
 		ArrayList<Chunk> chunkList = new ArrayList<Chunk>();
 		Chunk curChunk = null;
-		for (int lx = currentLevelX - visible_chunk_range; lx <= currentLevelX + visible_chunk_range; lx++)
+		for (int lx = currentLevel.x - visible_chunk_range; lx <= currentLevel.x + visible_chunk_range; lx++)
 		{
-			for (int lz = currentLevelZ - visible_chunk_range; lz <= currentLevelZ + visible_chunk_range; lz++)
+			for (int lz = currentLevel.z - visible_chunk_range; lz <= currentLevel.z + visible_chunk_range; lz++)
 			{
 				Chunk k = level.getChunk(lx, lz);
 				if (k != null)
 				{
 					chunkList.add(k);
-					if (lx == currentLevelX && lz == currentLevelZ)
+					if (lx == currentLevel.x && lz == currentLevel.z)
 					{
 						curChunk = k;
 					}
@@ -2614,20 +2576,20 @@ public class XRay
 			GL11.glTranslatef(this.sphere.sphere_x, this.sphere.sphere_y, this.sphere.sphere_z);
 			GL11.glDisable(GL11.GL_TEXTURE_2D);
 			Sphere mysphere = new Sphere();
-			GL11.glColor4f(.8f, .3f, .3f, .9f); 
+			GL11.glColor4f(.8f, .3f, .3f, .9f);
 			mysphere.draw(.4f, 10, 10);
-			GL11.glColor4f(.4f, .4f, .8f, .6f); 
+			GL11.glColor4f(.4f, .4f, .8f, .6f);
 			mysphere.draw((float)this.sphere.draw_sphere_radius, 20, 20);
 			GL11.glEnable(GL11.GL_TEXTURE_2D);
 			GL11.glPopMatrix();
 		}
 
 		// And now, if we're highlighting ores, highlight them.
-		if (toggle.highlightOres != HIGHLIGHT_TYPE.OFF)
+		if (Utility.toggle.highlightOres != HIGHLIGHT_TYPE.OFF)
 		{
 
 			GL11.glDisable(GL11.GL_DEPTH_TEST);
-			switch (toggle.highlightOres)
+			switch (Utility.toggle.highlightOres)
 			{
 			// Old-style; at least one person prefers it
 			case WHITE:
@@ -2638,7 +2600,7 @@ public class XRay
 					alpha = 1.0f - alpha;
 				}
 				alpha = 0.1f + (alpha * 0.8f);
-				GL11.glColor4f(alpha, alpha, alpha, alpha); 
+				GL11.glColor4f(alpha, alpha, alpha, alpha);
 				break;
 
 				// New style disco-y highlighting
@@ -2658,10 +2620,10 @@ public class XRay
 			{
 				for (Chunk k : chunkList)
 				{
-					if (k.x >= currentLevelX - highlight_chunk_range &&
-						k.x <= currentLevelX + highlight_chunk_range &&
-						k.z >= currentLevelZ - highlight_chunk_range &&
-						k.z <= currentLevelZ + highlight_chunk_range)
+					if (k.x >= currentLevel.x - highlight_chunk_range &&
+						k.x <= currentLevel.x + highlight_chunk_range &&
+						k.z >= currentLevel.z - highlight_chunk_range &&
+						k.z <= currentLevel.z + highlight_chunk_range)
 					{
 						if (k.usesSheet(i))
 						{
@@ -2736,8 +2698,8 @@ public class XRay
 		g.setColor(Color.WHITE);
 		g.fillRect(2, 2, 124, levelInfoTexture_h - 4);
 		g.setFont(ARIALFONT);
-		int chunkX = level.getChunkX(levelBlockX);
-		int chunkZ = level.getChunkZ(levelBlockZ);
+		int chunkX = level.getChunkX(levelBlock.x);
+		int chunkZ = level.getChunkZ(levelBlock.z);
 		g.setColor(Color.BLACK);
 		g.drawString("Chunk X:", labelX, 22);
 		g.setColor(Color.RED.darker());
@@ -2751,12 +2713,12 @@ public class XRay
 		g.setColor(Color.BLACK);
 		g.drawString("World X:", labelX, 22 + 32);
 		g.setColor(Color.RED.darker());
-		g.drawString(String.format("%.1f", reportBlockX), valueX, 22 + 32);
+		g.drawString(String.format("%.1f", reportBlock.x), valueX, 22 + 32);
 
 		g.setColor(Color.BLACK);
 		g.drawString("World Z:", labelX, 22 + 16 + 32);
 		g.setColor(Color.RED.darker());
-		g.drawString(String.format("%.1f", reportBlockZ), valueX, 22 + 16 + 32);
+		g.drawString(String.format("%.1f", reportBlock.z), valueX, 22 + 16 + 32);
 
 		g.setColor(Color.BLACK);
 		g.drawString("World Y:", labelX, 22 + 16 + 32 + 16);
@@ -2775,7 +2737,7 @@ public class XRay
 	/**
 	 * Renders a text label in an info box, with differing fonts/colors for the
 	 * label and its value
-	 * 
+	 *
 	 * @param g
 	 *            Graphics context to render to
 	 * @param x
@@ -2812,7 +2774,7 @@ public class XRay
 	 * will assume a border of "x" on each side, so it'll only work properly if the infobox
 	 * is right at the edge of the screen.
 	 *
-	 * 
+	 *
 	 * @param g
 	 *            Graphics context to render to
 	 * @param x
@@ -2836,7 +2798,7 @@ public class XRay
 
 	/**
 	 * Renders a slider-type graphic in an info box, including its label
-	 * 
+	 *
 	 * @param g
 	 *            Graphics context to render to
 	 * @param x
@@ -2904,22 +2866,22 @@ public class XRay
 			infoboxSlider(g, x_off, line_count * line_h, "Light Level:", Color.BLACK, DETAILFONT, line_h, 90, currentLightLevel, lightLevelEnd.length);
 		}
 		line_count++;
-		infoboxSlider(g, x_off, line_count * line_h, "Render Dist:", Color.BLACK, DETAILFONT, line_h, 90, currentChunkRange, CHUNK_RANGES.length);
+		infoboxSlider(g, x_off, line_count * line_h, "Render Dist:", Color.BLACK, DETAILFONT, line_h, 90, currentChunkRange, Utility.CHUNK_RANGES.length);
 		line_count++;
-		infoboxSlider(g, x_off, line_count * line_h, "Highlight Dist:", Color.BLACK, DETAILFONT, line_h, 90, currentHighlightDistance, HIGHLIGHT_RANGES.length);
+		infoboxSlider(g, x_off, line_count * line_h, "Highlight Dist:", Color.BLACK, DETAILFONT, line_h, 90, currentHighlightDistance, Utility.HIGHLIGHT_RANGES.length);
 		line_count++;
-		infoboxTextLabel(g, x_off, line_count * line_h, "Ore Highlight: ", Color.BLACK, DETAILFONT, toggle.highlightOres.reportText, toggle.highlightOres.reportColor, DETAILVALUEFONT);
-		if (toggle.highlight_explored)
+		infoboxTextLabel(g, x_off, line_count * line_h, "Ore Highlight: ", Color.BLACK, DETAILFONT, Utility.toggle.highlightOres.reportText, Utility.toggle.highlightOres.reportColor, DETAILVALUEFONT);
+		if (Utility.toggle.highlight_explored)
 		{
 			line_count++;
 			infoboxTextLabel(g, x_off, line_count * line_h, "Explored Highlight: ", Color.BLACK, DETAILFONT, "On", Color.GREEN.darker(), DETAILVALUEFONT);
 		}
-		if (toggle.render_bedrock)
+		if (Utility.toggle.render_bedrock)
 		{
 			line_count++;
 			infoboxTextLabel(g, x_off, line_count * line_h, "Bedrock: ", Color.BLACK, DETAILFONT, "On", Color.GREEN.darker(), DETAILVALUEFONT);
 		}
-		if (!toggle.render_water)
+		if (!Utility.toggle.render_water)
 		{
 			line_count++;
 			infoboxTextLabel(g, x_off, line_count * line_h, "Water: ", Color.BLACK, DETAILFONT, "Off", Color.RED.darker(), DETAILVALUEFONT);
@@ -2939,7 +2901,7 @@ public class XRay
 			line_count++;
 			infoboxTextLabel(g, x_off, line_count * line_h, "Vertical Lock: ", Color.BLACK, DETAILFONT, "On", Color.green.darker(), DETAILVALUEFONT);
 		}
-		if (!toggle.beta19_fences)
+		if (!Utility.toggle.beta19_fences)
 		{
 			line_count++;
 			infoboxTextLabel(g, x_off, line_count * line_h, "\"New\" Fences: ", Color.BLACK, DETAILFONT, "Off", Color.green.darker(), DETAILVALUEFONT);
@@ -3050,7 +3012,7 @@ public class XRay
 		SpriteTool.drawCurrentSprite(0, 48, renderDetails_w, cur_renderDetails_h, 0, 0, renderDetails_w / 256f, cur_renderDetails_h / 256f);
 		GL11.glColor4f(1.0f, 1.0f, 1.0f, 1f);
 	}
-	
+
 	/**
 	 * Draws a 2d GL box over which we can show some info which might be
 	 * difficult to make out otherwise (used for our ore highlights,
@@ -3150,10 +3112,10 @@ public class XRay
 			{
 				GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 				GL11.glDisable(GL11.GL_TEXTURE_2D);
-				SpriteTool.drawCurrentSprite(curX - 2, curY - 2, 36, 36, MinecraftConstants.precalcSpriteSheetToTextureX[blockArray[HIGHLIGHT_ORES[i]].tex_idx],
-						MinecraftConstants.precalcSpriteSheetToTextureY[blockArray[HIGHLIGHT_ORES[i]].tex_idx],
-						MinecraftConstants.precalcSpriteSheetToTextureX[blockArray[HIGHLIGHT_ORES[i]].tex_idx] + TEX16,
-						MinecraftConstants.precalcSpriteSheetToTextureY[blockArray[HIGHLIGHT_ORES[i]].tex_idx] + TEX32);
+				SpriteTool.drawCurrentSprite(curX - 2, curY - 2, 36, 36, MinecraftConstants.precalcSpriteSheetToTextureX[blockArray[Utility.HIGHLIGHT_ORES[i]].tex_idx],
+						MinecraftConstants.precalcSpriteSheetToTextureY[blockArray[Utility.HIGHLIGHT_ORES[i]].tex_idx],
+						MinecraftConstants.precalcSpriteSheetToTextureX[blockArray[Utility.HIGHLIGHT_ORES[i]].tex_idx] + TEX16,
+						MinecraftConstants.precalcSpriteSheetToTextureY[blockArray[Utility.HIGHLIGHT_ORES[i]].tex_idx] + TEX32);
 				GL11.glEnable(GL11.GL_TEXTURE_2D);
 			}
 			else
@@ -3161,11 +3123,11 @@ public class XRay
 				GL11.glColor4f(0.5f, 0.5f, 0.5f, 1.0f);
 			}
 			// TODO: should really fix this up so that we minimize binds
-			minecraftTextures.get(blockArray[HIGHLIGHT_ORES[i]].getTexSheet()).bind();
-			SpriteTool.drawCurrentSprite(curX, curY, 32, 32, MinecraftConstants.precalcSpriteSheetToTextureX[blockArray[HIGHLIGHT_ORES[i]].tex_idx],
-					MinecraftConstants.precalcSpriteSheetToTextureY[blockArray[HIGHLIGHT_ORES[i]].tex_idx],
-					MinecraftConstants.precalcSpriteSheetToTextureX[blockArray[HIGHLIGHT_ORES[i]].tex_idx] + TEX16,
-					MinecraftConstants.precalcSpriteSheetToTextureY[blockArray[HIGHLIGHT_ORES[i]].tex_idx] + TEX32);
+			minecraftTextures.get(blockArray[Utility.HIGHLIGHT_ORES[i]].getTexSheet()).bind();
+			SpriteTool.drawCurrentSprite(curX, curY, 32, 32, MinecraftConstants.precalcSpriteSheetToTextureX[blockArray[Utility.HIGHLIGHT_ORES[i]].tex_idx],
+					MinecraftConstants.precalcSpriteSheetToTextureY[blockArray[Utility.HIGHLIGHT_ORES[i]].tex_idx],
+					MinecraftConstants.precalcSpriteSheetToTextureX[blockArray[Utility.HIGHLIGHT_ORES[i]].tex_idx] + TEX16,
+					MinecraftConstants.precalcSpriteSheetToTextureY[blockArray[Utility.HIGHLIGHT_ORES[i]].tex_idx] + TEX32);
 
 			SpriteTool.drawSpriteAbsoluteXY(mineralToggleTextures[i], curX + 32 + 10, curY + 7);
 			curX += barWidth;
@@ -3271,8 +3233,8 @@ public class XRay
 
 			float vSizeFactor = .5f;
 
-			float vTexX = (1.0f / minimap.minimap_dim_f) * currentCameraPosX;
-			float vTexY = (1.0f / minimap.minimap_dim_f) * currentCameraPosZ;
+			float vTexX = (1.0f / minimap.minimap_dim_f) * currentCameraPos.x;
+			float vTexY = (1.0f / minimap.minimap_dim_f) * currentCameraPos.z;
 			float vTexZ = vSizeFactor;
 
 			GL11.glColor4f(1.0f, 1.0f, 1.0f, 0.7f);
@@ -3310,8 +3272,8 @@ public class XRay
 			// us. Sweet!
 			float vSizeFactor = 200.0f / minimap.minimap_dim_f;
 
-			float vTexX = (1.0f / minimap.minimap_dim_f) * currentCameraPosX;
-			float vTexY = (1.0f / minimap.minimap_dim_f) * currentCameraPosZ;
+			float vTexX = (1.0f / minimap.minimap_dim_f) * currentCameraPos.x;
+			float vTexY = (1.0f / minimap.minimap_dim_f) * currentCameraPos.z;
 			float vTexZ = vSizeFactor;
 
 			minimapTexture.bind();
@@ -3344,11 +3306,11 @@ public class XRay
 	/**
 	 * Returns the "base" minimap X coordinate, given chunk coordinate X. The
 	 * "base" will be the upper left corner.
-	 * 
+	 *
 	 * As of Beta 1.9-pre4, X increases to the east (decreasing to the west),
 	 * and Z increases to the South (decreasing to the North).  This is much nicer
 	 * to deal with then the way we were pretending things worked previously.
-	 * 
+	 *
 	 * param chunkZ
 	 * @return
 	 */
@@ -3360,11 +3322,11 @@ public class XRay
 	/**
 	 * Returns the "base" minimap Y coordinate, given chunk coordinate Z. The
 	 * "base" will be the upper left corner.
-	 * 
+	 *
 	 * As of Beta 1.9-pre4, X increases to the east (decreasing to the west),
 	 * and Z increases to the South (decreasing to the North).  This is much nicer
 	 * to deal with then the way we were pretending things worked previously.
-	 * 
+	 *
 	 * @param chunkZ
 	 * @return
 	 */
@@ -3375,7 +3337,7 @@ public class XRay
 
 	/**
 	 * Clears out the area on the minimap belonging to this chunk
-	 * 
+	 *
 	 * @param x
 	 * @param z
 	 */
@@ -3389,7 +3351,7 @@ public class XRay
 
 	/**
 	 * Loops through a list of chunks and removes them from the minimap
-	 * 
+	 *
 	 * @param trimList
 	 */
 	private void removeChunklistFromMap(ArrayList<Chunk> trimList)
@@ -3410,7 +3372,7 @@ public class XRay
 
 	/***
 	 * draws a chunk to the (mini) map
-	 * 
+	 *
 	 * @param x
 	 * @param z
 	 */
@@ -3492,11 +3454,11 @@ public class XRay
 	 */
 	private void saveOptionStates()
 	{
-		xray_properties.setBooleanProperty("STATE_BEDROCK", toggle.render_bedrock);
-		xray_properties.setBooleanProperty("STATE_WATER", toggle.render_water);
-		xray_properties.setBooleanProperty("STATE_EXPLORED", toggle.highlight_explored);
-		xray_properties.setBooleanProperty("STATE_BETA19_FENCES", toggle.beta19_fences);
-		xray_properties.setProperty("STATE_HIGHLIGHT_ORES", toggle.highlightOres.toString());
+		xray_properties.setBooleanProperty("STATE_BEDROCK", Utility.toggle.render_bedrock);
+		xray_properties.setBooleanProperty("STATE_WATER", Utility.toggle.render_water);
+		xray_properties.setBooleanProperty("STATE_EXPLORED", Utility.toggle.highlight_explored);
+		xray_properties.setBooleanProperty("STATE_BETA19_FENCES", Utility.toggle.beta19_fences);
+		xray_properties.setProperty("STATE_Utility.HIGHLIGHT_ORES", Utility.toggle.highlightOres.toString());
 		xray_properties.setBooleanProperty("STATE_CAMERA_LOCK", camera_lock);
 		xray_properties.setBooleanProperty("STATE_LIGHTING", lightMode);
 		xray_properties.setBooleanProperty("STATE_LEVEL_INFO", levelInfoToggle);
@@ -3522,28 +3484,28 @@ public class XRay
 	 */
 	private void loadOptionStates()
 	{
-		toggle.render_bedrock = xray_properties.getBooleanProperty("STATE_BEDROCK", toggle.render_bedrock);
-		toggle.render_water = xray_properties.getBooleanProperty("STATE_WATER", toggle.render_water);
-		toggle.highlight_explored = xray_properties.getBooleanProperty("STATE_EXPLORED", toggle.highlight_explored);
-		toggle.beta19_fences = xray_properties.getBooleanProperty("STATE_BETA19_FENCES", toggle.beta19_fences);
-		String highlight = xray_properties.getProperty("STATE_HIGHLIGHT_ORES");
+		Utility.toggle.render_bedrock = xray_properties.getBooleanProperty("STATE_BEDROCK", Utility.toggle.render_bedrock);
+		Utility.toggle.render_water = xray_properties.getBooleanProperty("STATE_WATER", Utility.toggle.render_water);
+		Utility.toggle.highlight_explored = xray_properties.getBooleanProperty("STATE_EXPLORED", Utility.toggle.highlight_explored);
+		Utility.toggle.beta19_fences = xray_properties.getBooleanProperty("STATE_BETA19_FENCES", Utility.toggle.beta19_fences);
+		String highlight = xray_properties.getProperty("STATE_Utility.HIGHLIGHT_ORES");
 		if (highlight == null || highlight.equals("1"))
 		{
-			toggle.highlightOres = defaultHighlightOre;
+			Utility.toggle.highlightOres = Utility.defaultHighlightOre;
 		}
 		else if (highlight.equals("0"))
 		{
-			toggle.highlightOres = HIGHLIGHT_TYPE.OFF;
+			Utility.toggle.highlightOres = HIGHLIGHT_TYPE.OFF;
 		}
 		else
 		{
 			try
 			{
-				toggle.highlightOres = Enum.valueOf(HIGHLIGHT_TYPE.class, highlight);
+				Utility.toggle.highlightOres = Enum.valueOf(HIGHLIGHT_TYPE.class, highlight);
 			}
 			catch (IllegalArgumentException e)
 			{
-				toggle.highlightOres = defaultHighlightOre;
+				Utility.toggle.highlightOres = Utility.defaultHighlightOre;
 			}
 		}
 		camera_lock = xray_properties.getBooleanProperty("STATE_CAMERA_LOCK", camera_lock);
