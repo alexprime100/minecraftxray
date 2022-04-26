@@ -25,6 +25,9 @@ public final class Utility {
     public static String app_name    = "Minecraft X-Ray";
     public static String windowTitle = app_name + " " + app_version;
 
+    public static final int renderDetails_w = 160;
+    public static final int levelInfoTexture_h = 144;
+
     public static final XRay.HIGHLIGHT_TYPE defaultHighlightOre = XRay.HIGHLIGHT_TYPE.DISCO;
 
     public static XRay.RenderToggles toggle = new XRay.RenderToggles();

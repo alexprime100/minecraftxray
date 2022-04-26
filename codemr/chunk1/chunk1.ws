@@ -1,0 +1,1 @@
+{"xray":{"name":"xray","packages":{"com.apocalyptech.minecraft.xray":{"packageName":"com.apocalyptech.minecraft.xray","isAll":false,"classes":["Lcom.apocalyptech.minecraft.xray.Chunk.RENDER_PASS","Lcom.apocalyptech.minecraft.xray.Chunk.STAIR_RENDER","Lcom.apocalyptech.minecraft.xray.Chunk","Lcom.apocalyptech.minecraft.xray.Chunk.FACING"]}}}}

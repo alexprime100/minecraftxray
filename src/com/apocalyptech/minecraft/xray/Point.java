@@ -1,4 +1,4 @@
-package com.apocalyptech.minecraft;
+package com.apocalyptech.minecraft.xray;
 
 public class Point {
     public int x;

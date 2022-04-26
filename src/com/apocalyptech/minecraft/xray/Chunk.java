@@ -33,7 +33,7 @@ import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.regex.PatternSyntaxException;
 
-import com.apocalyptech.minecraft.Point;
+import com.apocalyptech.minecraft.xray.enums.*;
 import org.lwjgl.opengl.GL11;
 
 import com.apocalyptech.minecraft.xray.dtf.CompoundTag;
@@ -96,28 +96,6 @@ public abstract class Chunk {
 	public HashMap<Integer, Boolean> usedTextureSheets;
 
 	private Fence fence = new Fence();
-
-	private static enum RENDER_PASS {
-		SOLIDS,
-		NONSTANDARD,
-		GLASS,
-		SELECTED
-	}
-
-	protected static enum FACING {
-		TOP,
-		BOTTOM,
-		NORTH,
-		SOUTH,
-		WEST,
-		EAST
-	}
-
-	private static enum STAIR_RENDER {
-		NO,
-		YES,
-		OFFSET
-	}
 	
 	public Chunk(MinecraftLevel level, Tag data) {
 		

@@ -44,6 +44,7 @@ import com.apocalyptech.minecraft.xray.dtf.ListTag;
 import com.apocalyptech.minecraft.xray.dtf.ByteTag;
 import com.apocalyptech.minecraft.xray.dtf.IntTag;
 import com.apocalyptech.minecraft.xray.dtf.Tag;
+import com.apocalyptech.minecraft.xray.enums.*;
 
 import static com.apocalyptech.minecraft.xray.MinecraftConstants.*;
 

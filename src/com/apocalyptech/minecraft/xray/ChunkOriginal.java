@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.regex.PatternSyntaxException;
 
+import com.apocalyptech.minecraft.xray.enums.*;
 import org.lwjgl.opengl.GL11;
 
 import com.apocalyptech.minecraft.xray.dtf.ShortArrayTag;

@@ -26,7 +26,6 @@
  */
 package com.apocalyptech.minecraft.xray;
 
-import com.apocalyptech.minecraft.Point;
 import com.apocalyptech.minecraft.xray.MinecraftConstants.KEY_ACTION;
 import com.apocalyptech.minecraft.xray.dialog.JumpDialog;
 import com.apocalyptech.minecraft.xray.dialog.ResolutionDialog;
@@ -228,9 +227,7 @@ public class XRay
 	private Texture levelInfoTexture;
 	private boolean renderDetailsToggle = true;
 	private Texture renderDetailsTexture;
-	private int renderDetails_w = 160;
 	private int cur_renderDetails_h;
-	private int levelInfoTexture_h = 144;
 	private boolean regenerateRenderDetailsTexture = false;
 	private boolean regenerateOreHighlightTexture = false;
 	private boolean regenerateOutOfBoundsTexture = false;
@@ -785,7 +782,7 @@ public class XRay
 		{
 			GL11.glEnable(GL11.GL_BLEND);
 			GL11.glEnable(GL11.GL_TEXTURE_2D);
-			setOrthoOff();
+		    Utility.setOrthoOff();
 			first_run = false;
 		}
 		initial_load_done = true;
@@ -2655,7 +2652,7 @@ public class XRay
 			setOrthoOn(); // 2d mode
 			this.drawBgBox((float)x, (float)y, (float)outOfRangeWidth, (float)outOfRangeHeight);
 			SpriteTool.drawSpriteAbsoluteXY(outOfRangeTexture, x, y);
-			setOrthoOff(); // back to 3d mode
+			Utility.setOrthoOff(); // back to 3d mode
 		}
 
 		// draw the user interface (fps and map)
@@ -2685,7 +2682,7 @@ public class XRay
 			drawRenderDetails();
 		}
 
-		setOrthoOff(); // back to 3d mode
+		Utility.setOrthoOff(); // back to 3d mode
 	}
 
 	private void updateLevelInfo()
@@ -2694,9 +2691,9 @@ public class XRay
 		int valueX = 70;
 		Graphics2D g = levelInfoTexture.getImage().createGraphics();
 		g.setBackground(Color.BLUE);
-		g.clearRect(0, 0, 128, levelInfoTexture_h);
+		g.clearRect(0, 0, 128, Utility.levelInfoTexture_h);
 		g.setColor(Color.WHITE);
-		g.fillRect(2, 2, 124, levelInfoTexture_h - 4);
+		g.fillRect(2, 2, 124, Utility.levelInfoTexture_h - 4);
 		g.setFont(ARIALFONT);
 		int chunkX = level.getChunkX(levelBlock.x);
 		int chunkZ = level.getChunkZ(levelBlock.z);
@@ -2793,7 +2790,7 @@ public class XRay
 		Rectangle2D bounds = labelFont.getStringBounds(label, g.getFontRenderContext());
 		g.setColor(labelColor);
 		g.setFont(labelFont);
-		g.drawString(label, x + (int)((renderDetails_w - (x*2) - bounds.getWidth())/2), y);
+		g.drawString(label, x + (int)((Utility.renderDetails_w - (x*2) - bounds.getWidth())/2), y);
 	}
 
 	/**
@@ -2824,7 +2821,7 @@ public class XRay
 	{
 		int slider_top_y = y - line_h + 10;
 		int slider_h = 8;
-		int slider_end_x = renderDetails_w - 8;
+		int slider_end_x = Utility.renderDetails_w - 8;
 		// We have a cast to float in there because otherwise rounding errors can pile up
 		int marker_x = slider_start_x + (int)(curval * ((slider_end_x - slider_start_x) / (float)(val_length - 1)));
 
@@ -2852,7 +2849,7 @@ public class XRay
 		int line_count = 0;
 		Graphics2D g = renderDetailsTexture.getImage().createGraphics();
 		g.setBackground(Color.WHITE);
-		g.clearRect(0, 0, renderDetails_w, renderDetailsTexture.getTextureWidth());
+		g.clearRect(0, 0, Utility.renderDetails_w, renderDetailsTexture.getTextureWidth());
 		g.setFont(DETAILFONT);
 		g.setColor(Color.BLACK);
 		if (!lightMode)
@@ -2927,7 +2924,7 @@ public class XRay
 		cur_renderDetails_h = (line_count + 1) * line_h - 8;
 		g.setColor(Color.BLUE);
 		g.setStroke(new BasicStroke(2));
-		g.drawRect(1, 1, renderDetails_w - 2, cur_renderDetails_h - 2);
+		g.drawRect(1, 1, Utility.renderDetails_w - 2, cur_renderDetails_h - 2);
 		renderDetailsTexture.update();
 
 		this.regenerateRenderDetailsTexture = false;
@@ -2999,7 +2996,7 @@ public class XRay
 		}
 		GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 		levelInfoTexture.bind();
-		SpriteTool.drawCurrentSprite(0, y, 128, levelInfoTexture_h, 0, 0, 1f, levelInfoTexture_h / 256f);
+		SpriteTool.drawCurrentSprite(0, y, 128, Utility.levelInfoTexture_h, 0, 0, 1f, Utility.levelInfoTexture_h / 256f);
 	}
 
 	/***
@@ -3009,7 +3006,7 @@ public class XRay
 	{
 		renderDetailsTexture.bind();
 		GL11.glColor4f(1.0f, 1.0f, 1.0f, .7f);
-		SpriteTool.drawCurrentSprite(0, 48, renderDetails_w, cur_renderDetails_h, 0, 0, renderDetails_w / 256f, cur_renderDetails_h / 256f);
+		SpriteTool.drawCurrentSprite(0, 48, Utility.renderDetails_w, cur_renderDetails_h, 0, 0, Utility.renderDetails_w / 256f, cur_renderDetails_h / 256f);
 		GL11.glColor4f(1.0f, 1.0f, 1.0f, 1f);
 	}
 
@@ -3202,20 +3199,6 @@ public class XRay
 		GL11.glLoadIdentity(); // clear the Modelview Matrix
 		// disable depth test so further drawing will go over the current scene
 		GL11.glDisable(GL11.GL_DEPTH_TEST);
-	}
-
-	/**
-	 * Restore the previous mode
-	 */
-	public static void setOrthoOff()
-	{
-		// restore the original positions and views
-		GL11.glMatrixMode(GL11.GL_PROJECTION);
-		GL11.glPopMatrix();
-		GL11.glMatrixMode(GL11.GL_MODELVIEW);
-		GL11.glPopMatrix();
-		// turn Depth Testing back on
-		GL11.glEnable(GL11.GL_DEPTH_TEST);
 	}
 
 	/***

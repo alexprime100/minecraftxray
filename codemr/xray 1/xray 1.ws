@@ -1,0 +1,1 @@
+{"xray":{"name":"xray","packages":{"com.apocalyptech.minecraft.xray":{"packageName":"com.apocalyptech.minecraft.xray","isAll":false,"classes":["Lcom.apocalyptech.minecraft.xray.XRay","Lcom.apocalyptech.minecraft.xray.XRay.HIGHLIGHT_TYPE","Lcom.apocalyptech.minecraft.xray.XRay.RenderToggles"]}}}}
