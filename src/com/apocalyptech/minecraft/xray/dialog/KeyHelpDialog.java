@@ -27,6 +27,7 @@
  */
 package com.apocalyptech.minecraft.xray.dialog;
 
+import com.apocalyptech.minecraft.xray.Utility;
 import com.apocalyptech.minecraft.xray.XRay;
 import static com.apocalyptech.minecraft.xray.MinecraftConstants.*;
 
@@ -737,7 +738,7 @@ public class KeyHelpDialog
 			if (bound_key_orig != bound_key_new)
 			{
 				changed = true;
-				XRay.logger.debug("Action " + action.toString() + " has changed from " +
+				Utility.logger.debug("Action " + action.toString() + " has changed from " +
 						Keyboard.getKeyName(bound_key_orig) + " to " +
 						Keyboard.getKeyName(bound_key_new));
 				this.key_mapping.put(action, bound_key_new);
@@ -753,7 +754,7 @@ public class KeyHelpDialog
 	/***
 	 * Creates a new KeyHelpDialog
 	 * @param key_mapping the current keymap
-	 * @param windowName the title of the dialog
+	 * param windowName the title of the dialog
 	 */
 	protected KeyHelpDialog(HashMap<KEY_ACTION, Integer> key_mapping, XRay xrayInstance)
 	{
@@ -793,7 +794,7 @@ public class KeyHelpDialog
 	/***
 	 * Pops up the dialog window
 	 * @param key_mapping the current key map
-	 * @param windowName the title of the dialog
+	 * param windowName the title of the dialog
 	 */
 	public static void presentDialog(HashMap<KEY_ACTION, Integer> key_mapping, XRay xrayInstance)
 	{

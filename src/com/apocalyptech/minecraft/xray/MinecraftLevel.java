@@ -176,7 +176,7 @@ public class MinecraftLevel {
 			catch (Exception e)
 			{
 				// Just report to console and continue.
-				XRay.logger.warn("Error loading position information for user " + mpusername + ": " + e.toString());
+				Utility.logger.warn("Error loading position information for user " + mpusername + ": " + e.toString());
 			}
 		}
 		

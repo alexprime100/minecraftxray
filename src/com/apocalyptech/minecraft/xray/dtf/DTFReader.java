@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.zip.GZIPInputStream;
 
+import com.apocalyptech.minecraft.xray.Utility;
 import com.apocalyptech.minecraft.xray.XRay;
 
 public class DTFReader {
@@ -160,11 +161,11 @@ public class DTFReader {
 			return readTagData(stream);
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block"
-			XRay.logger.error("Error reading " + f.getPath() + " -");
+			Utility.logger.error("Error reading " + f.getPath() + " -");
 			e.printStackTrace();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
-			XRay.logger.error("Error reading " + f.getPath() + " -");
+			Utility.logger.error("Error reading " + f.getPath() + " -");
 			e.printStackTrace();
 		}
 		return null;

@@ -167,7 +167,7 @@ public class ChunkOriginal extends Chunk {
 		}
 		else
 		{
-			Chunk otherChunk = level.getChunk(this.x-1, this.z);
+			Chunk otherChunk = level.getChunk(this.point.x-1, this.point.z);
 			if (otherChunk == null)
 			{
 				return -1;
@@ -192,7 +192,7 @@ public class ChunkOriginal extends Chunk {
 		}
 		else
 		{
-			Chunk otherChunk = level.getChunk(this.x+1, this.z);
+			Chunk otherChunk = level.getChunk(this.point.x+1, this.point.z);
 			if (otherChunk == null)
 			{
 				return -1;
@@ -217,7 +217,7 @@ public class ChunkOriginal extends Chunk {
 		}
 		else
 		{
-			Chunk otherChunk = level.getChunk(this.x, this.z-1);
+			Chunk otherChunk = level.getChunk(this.point.x, this.point.z-1);
 			if (otherChunk == null)
 			{
 				return -1;
@@ -242,7 +242,7 @@ public class ChunkOriginal extends Chunk {
 		}
 		else
 		{
-			Chunk otherChunk = level.getChunk(this.x, this.z+1);
+			Chunk otherChunk = level.getChunk(this.point.x, this.point.z+1);
 			if (otherChunk == null)
 			{
 				return -1;
@@ -319,9 +319,9 @@ public class ChunkOriginal extends Chunk {
 		{
 			return -2;
 		}
-		this.ly = this.lOffset % 128;
-		this.lz = (this.lOffset / 128) % 16;
-		this.lx = this.lOffset / 2048;
+		this.l.y = this.lOffset % 128;
+		this.l.z = (this.lOffset / 128) % 16;
+		this.l.x = this.lOffset / 2048;
 		return this.blockData.value[this.lOffset];
 	}
 

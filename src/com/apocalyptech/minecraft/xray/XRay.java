@@ -676,7 +676,7 @@ public class XRay
 			c = level.getChunk(b.x, b.z);
 			if (c != null)
 			{
-				if (c.x == b.x && c.z == b.z)
+				if (c.point.x == b.x && c.point.z == b.z)
 				{
 					continue;
 				}
@@ -1604,11 +1604,11 @@ public class XRay
 						tempchunk = level.getChunk(lx, lz);
 						if (tempchunk != null)
 						{
-							if (tempchunk.x == lx && tempchunk.z == lz)
+							if (tempchunk.point.x == lx && tempchunk.point.z == lz)
 							{
 								if (!tempchunk.isOnMinimap)
 								{
-									drawChunkToMap(tempchunk.x, tempchunk.z);
+									drawChunkToMap(tempchunk.point.x, tempchunk.point.z);
 									// minimap_changed = true;
 								}
 								continue;
@@ -1642,11 +1642,11 @@ public class XRay
 						tempchunk = level.getChunk(lx, lz);
 						if (tempchunk != null)
 						{
-							if (tempchunk.x == lx && tempchunk.z == lz)
+							if (tempchunk.point.x == lx && tempchunk.point.z == lz)
 							{
 								if (!tempchunk.isOnMinimap)
 								{
-									drawChunkToMap(tempchunk.x, tempchunk.z);
+									drawChunkToMap(tempchunk.point.x, tempchunk.point.z);
 									// minimap_changed = true;
 								}
 								continue;
@@ -2620,10 +2620,10 @@ public class XRay
 			{
 				for (Chunk k : chunkList)
 				{
-					if (k.x >= currentLevel.x - highlight_chunk_range &&
-						k.x <= currentLevel.x + highlight_chunk_range &&
-						k.z >= currentLevel.z - highlight_chunk_range &&
-						k.z <= currentLevel.z + highlight_chunk_range)
+					if (k.point.x >= currentLevel.x - highlight_chunk_range &&
+						k.point.x <= currentLevel.x + highlight_chunk_range &&
+						k.point.z >= currentLevel.z - highlight_chunk_range &&
+						k.point.z <= currentLevel.z + highlight_chunk_range)
 					{
 						if (k.usesSheet(i))
 						{
@@ -3361,7 +3361,7 @@ public class XRay
 		boolean minimap_changed = false;
 		for (Chunk tempchunk_trim : trimList)
 		{
-			removeMapChunkFromMap(tempchunk_trim.x, tempchunk_trim.z);
+			removeMapChunkFromMap(tempchunk_trim.point.x, tempchunk_trim.point.z);
 			minimap_changed = true;
 		}
 		if (minimap_changed)

@@ -105,7 +105,7 @@ public class RegionFileCache {
 				}
 				else
 				{
-					XRay.logger.error("Could not match region coordinates for " + region.getName());
+					Utility.logger.error("Could not match region coordinates for " + region.getName());
 				}
 			}
 		}
@@ -120,7 +120,7 @@ public class RegionFileCache {
 		{
 			if (pair.getValueOne() == curRegionX && pair.getValueTwo() == curRegionZ)
 			{
-				XRay.logger.trace("Our current region is present, jumping internally");
+				Utility.logger.trace("Our current region is present, jumping internally");
 				closestPair = pair;
 				break;
 			}
@@ -157,7 +157,7 @@ public class RegionFileCache {
 		// Now compute the chunk coordinates we should actually jump to
 		if (closestPair == null)
 		{
-			XRay.logger.debug("No regions found to jump to");
+			Utility.logger.debug("No regions found to jump to");
 		}
 		else
 		{

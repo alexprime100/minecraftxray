@@ -246,7 +246,7 @@ public class ChunkAnvil extends Chunk {
 		}
 		else
 		{
-			Chunk otherChunk = level.getChunk(this.x-1, this.z);
+			Chunk otherChunk = level.getChunk(this.point.x-1, this.point.z);
 			if (otherChunk == null)
 			{
 				return -1;
@@ -279,7 +279,7 @@ public class ChunkAnvil extends Chunk {
 		}
 		else
 		{
-			Chunk otherChunk = level.getChunk(this.x+1, this.z);
+			Chunk otherChunk = level.getChunk(this.point.x+1, this.point.z);
 			if (otherChunk == null)
 			{
 				return -1;
@@ -312,7 +312,7 @@ public class ChunkAnvil extends Chunk {
 		}
 		else
 		{
-			Chunk otherChunk = level.getChunk(this.x, this.z-1);
+			Chunk otherChunk = level.getChunk(this.point.x, this.point.z-1);
 			if (otherChunk == null)
 			{
 				return -1;
@@ -345,7 +345,7 @@ public class ChunkAnvil extends Chunk {
 		}
 		else
 		{
-			Chunk otherChunk = level.getChunk(this.x, this.z+1);
+			Chunk otherChunk = level.getChunk(this.point.x, this.point.z+1);
 			if (otherChunk == null)
 			{
 				return -1;
@@ -482,9 +482,9 @@ public class ChunkAnvil extends Chunk {
 		{
 			return -2;
 		}
-		this.lx = this.lOffset % 16;
-		this.lz = (this.lOffset / 16) % 16;
-		this.ly = (this.lOffset / 256) + (16*this.lSection);
+		this.l.x = this.lOffset % 16;
+		this.l.z = (this.lOffset / 16) % 16;
+		this.l.y = (this.lOffset / 256) + (16*this.lSection);
 
 		return this.blockData.get(this.lSection).value[this.lOffset];
 	}

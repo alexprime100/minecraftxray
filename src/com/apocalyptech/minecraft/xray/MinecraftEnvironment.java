@@ -156,7 +156,7 @@ public class MinecraftEnvironment {
 				MinecraftEnvironment.baseDir = null;
 				MinecraftEnvironment.xrayBaseDir = null;
 		}
-		//XRay.logger.debug(MinecraftEnvironment.baseDir.getAbsolutePath());
+		//Utility.logger.debug(MinecraftEnvironment.baseDir.getAbsolutePath());
 	}
 	
 	/***
@@ -190,7 +190,7 @@ public class MinecraftEnvironment {
 				}
 				catch (Exception e)
 				{
-					XRay.logger.warn(e.toString());
+					Utility.logger.warn(e.toString());
 					// Nothing; guess we'll ignore it.
 				}
 			}
@@ -368,7 +368,7 @@ public class MinecraftEnvironment {
 		File overrideFile = new File(xrayBaseDir, "textures/" + filename);
 		if(overrideFile.exists()) {
 			try {
-				XRay.logger.info("Overriding " + filename + " at " + overrideFile.getPath());
+				Utility.logger.info("Overriding " + filename + " at " + overrideFile.getPath());
 				return new FileInputStream(overrideFile);
 			} catch (FileNotFoundException e) {
 				// Don't do anything; just continue on our merry little way
@@ -443,7 +443,7 @@ public class MinecraftEnvironment {
 					ZipEntry entry = zf.getEntry(filename);
 					if (entry != null)
 					{
-						XRay.logger.info("Using " + filename + " from texturepack " + texturepack);
+						Utility.logger.info("Using " + filename + " from texturepack " + texturepack);
 						return zf.getInputStream(entry);
 					}
 				}
@@ -607,7 +607,7 @@ public class MinecraftEnvironment {
 			r = (pixels[i] & 0x00FF0000) >> 16;
 			g = (pixels[i] & 0x0000FF00) >> 8;
 			b = (pixels[i] & 0x000000FF);
-			//XRay.logger.debug("Pixel " + i + ": " + r + ", " + g + ", " + b + ", " + a);
+			//Utility.logger.debug("Pixel " + i + ": " + r + ", " + g + ", " + b + ", " + a);
 			if (g > r+50 || g > b+50)
 			{
 				grayscale = false;
@@ -848,7 +848,7 @@ public class MinecraftEnvironment {
 		blockCollection.loadFilenameTextures();
 
 		// Report on the count of texture sheets
-		XRay.logger.debug("Texture Sheet count: " + blockCollection.textures.size());
+		Utility.logger.debug("Texture Sheet count: " + blockCollection.textures.size());
 		
 		// For each texture we now have, copy the texture underneath, tinted for our "explored" areas
 		i = 0;
@@ -869,7 +869,7 @@ public class MinecraftEnvironment {
 			/*
 			try {
 				ImageIO.write(image, "PNG", new File(System.getProperty("user.home"), "xray_terrain_" + i + ".png"));
-				XRay.logger.info("Wrote texture to ~/xray_terrain_" + i + ".png");
+				Utility.logger.info("Wrote texture to ~/xray_terrain_" + i + ".png");
 			}
 			catch (Exception e)
 			{
@@ -933,7 +933,7 @@ public class MinecraftEnvironment {
 						return jf.getInputStream(zipEntry);
 					}
 				} catch (IOException e) {
-					XRay.logger.warn(e.toString());
+					Utility.logger.warn(e.toString());
 					//return null;
 				}
 			}
@@ -948,7 +948,7 @@ public class MinecraftEnvironment {
 		if (fileName.equals("terrain.png") || fileName.equals("particles.png") ||
 				fileName.equals("art/kz.png") || fileName.equals("misc/water.png"))
 		{
-			XRay.logger.info("Resorting to bundled " + fileName);
+			Utility.logger.info("Resorting to bundled " + fileName);
 			File dataFile = new File("textures", fileName);
 			if (dataFile.exists())
 			{
