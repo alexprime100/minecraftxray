@@ -425,4 +425,8 @@ public class WorldInfo implements Comparable<WorldInfo>
 		Collections.sort(dims);
 		return dims;
 	}
+
+	public void setMinecraftWorld(){
+
+	}
 }

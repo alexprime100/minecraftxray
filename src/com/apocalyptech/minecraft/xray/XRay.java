@@ -108,9 +108,6 @@ public class XRay
 	private FirstPersonCameraController camera;
 	private boolean camera_lock = false;
 
-	// the current mouseX and mouseY on the screen
-	private Point mouse = new Point();
-
 	// the sprite sheet for all textures
 	public ArrayList<Texture> minecraftTextures;
 	public Texture paintingTexture;
@@ -273,7 +270,7 @@ public class XRay
 	private String cameraTextOverride = null;
 
 	private HashMap<KEY_ACTION, Integer> key_mapping;
-	private XRayProperties xray_properties;
+	public static XRayProperties xray_properties;
 
 	public boolean jump_dialog_trigger = false;
 	public int open_dialog_trigger = 0;
@@ -1360,7 +1357,8 @@ public class XRay
 			{
 				this.sphere.draw_sphere_radius = (this.sphere.draw_sphere_radius / this.sphere.draw_sphere_radius_inc) * this.sphere.draw_sphere_radius_inc;
 			}
-			this.changeSphereSize(0);
+			//this.changeSphereSize(0);
+			sphere.changeSize(0);
 		}
 		else
 		{
@@ -1733,21 +1731,21 @@ public class XRay
 		int key;
 
 		// distance in mouse movement from the last getDX() call.
-		mouse.x = Mouse.getDX();
+		int x = Mouse.getDX();
 		// distance in mouse movement from the last getDY() call.
-		mouse.y = Mouse.getDY();
+		int y = Mouse.getDY();
 
 		// we are on the main world screen or the level loading screen update the camera (but only if the mouse is grabbed)
 		if (Mouse.isGrabbed())
 		{
-			camera.incYaw(mouse.x * MOUSE_SENSITIVITY);
+			camera.incYaw(x * MOUSE_SENSITIVITY);
 			if (invertMouse)
 			{
-				camera.incPitch(mouse.y * MOUSE_SENSITIVITY);
+				camera.incPitch(y * MOUSE_SENSITIVITY);
 			}
 			else
 			{
-				camera.incPitch(-mouse.y * MOUSE_SENSITIVITY);
+				camera.incPitch(-y * MOUSE_SENSITIVITY);
 			}
 		}
 
@@ -1984,22 +1982,22 @@ public class XRay
 				}
 				else if (key == key_mapping.get(KEY_ACTION.TOGGLE_SPHERE))
 				{
-					toggleSphere();
+					sphere.toggle(camera, world);
 					updateRenderDetails();
 				}
 				else if (key == key_mapping.get(KEY_ACTION.SPHERE_SIZE_UP))
 				{
-					changeSphereSize(this.sphere.draw_sphere_radius_inc);
+					sphere.changeSize(this.sphere.draw_sphere_radius_inc);
 					updateRenderDetails();
 				}
 				else if (key == key_mapping.get(KEY_ACTION.SPHERE_SIZE_DOWN))
 				{
-					changeSphereSize(-this.sphere.draw_sphere_radius_inc);
+					sphere.changeSize(-this.sphere.draw_sphere_radius_inc);
 					updateRenderDetails();
 				}
 				else if (key == key_mapping.get(KEY_ACTION.SPHERE_SET))
 				{
-					setSphereCenter();
+					sphere.setCenter(camera, world);
 					updateRenderDetails();
 				}
 				else if (key == key_mapping.get(KEY_ACTION.DIMENSION_NEXT))
@@ -2156,55 +2154,6 @@ public class XRay
 				this.open_dialog_trigger += 1;
 			}
 		}
-	}
-
-	/**
-	 * Toggles rendering of our sphere
-	 */
-	private void toggleSphere()
-	{
-		this.sphere.draw_sphere = !this.sphere.draw_sphere;
-		this.xray_properties.setBooleanProperty("STATE_SPHERE", this.sphere.draw_sphere);
-		if (this.sphere.draw_sphere && !this.sphere.set_sphere_center)
-		{
-			this.setSphereCenter();
-		}
-	}
-
-	/**
-	 * Sets the center of our sphere
-	 */
-	private void setSphereCenter()
-	{
-		this.sphere.sphere_x = -camera.getPosition().x;
-		this.sphere.sphere_y = -camera.getPosition().y;
-		this.sphere.sphere_z = -camera.getPosition().z;
-		this.sphere.set_sphere_center = true;
-		if (!this.sphere.draw_sphere)
-		{
-			this.toggleSphere();
-		}
-		this.xray_properties.setProperty("LAST_SPHERE_WORLD", this.world.getBasePath());
-		this.xray_properties.setFloatProperty("STATE_SPHERE_X", this.sphere.sphere_x);
-		this.xray_properties.setFloatProperty("STATE_SPHERE_Y", this.sphere.sphere_y);
-		this.xray_properties.setFloatProperty("STATE_SPHERE_Z", this.sphere.sphere_z);
-	}
-
-	/**
-	 * Changes the radius of our sphere by the given increment
-	 */
-	private void changeSphereSize(int increment)
-	{
-		this.sphere.draw_sphere_radius += increment;
-		if (this.sphere.draw_sphere_radius < this.sphere.draw_sphere_radius_min)
-		{
-			this.sphere.draw_sphere_radius = this.sphere.draw_sphere_radius_min;
-		}
-		else if (this.sphere.draw_sphere_radius > this.sphere.draw_sphere_radius_max)
-		{
-			this.sphere.draw_sphere_radius = this.sphere.draw_sphere_radius_max;
-		}
-		this.xray_properties.setIntProperty("STATE_SPHERE_RADIUS", this.sphere.draw_sphere_radius);
 	}
 
 	/**
@@ -2373,8 +2322,8 @@ public class XRay
 		Graphics2D g = minimapGraphics;
 
 		CameraPreset spawn = level.getSpawnPoint();
-		int sy = getMinimapBaseY(spawn.block.cz) + (spawn.block.x % 16);
-		int sx = (getMinimapBaseX(spawn.block.cx) + (spawn.block.z % 16)) % minimap.minimap_dim;
+		int sy = minimap.getMinimapBaseY(spawn.block.cz) + (spawn.block.x % 16);
+		int sx = (minimap.getMinimapBaseX(spawn.block.cx) + (spawn.block.z % 16)) % minimap.minimap_dim;
 
 		g.setStroke(new BasicStroke(2));
 		g.setColor(Color.red.brighter());
@@ -2392,8 +2341,8 @@ public class XRay
 		Graphics2D g = minimapGraphics;
 
 		CameraPreset player = level.getPlayerPosition();
-		int py = getMinimapBaseY(player.block.cz) + (player.block.x % 16);
-		int px = getMinimapBaseX(player.block.cx) + (player.block.z % 16);
+		int py = minimap.getMinimapBaseY(player.block.cz) + (player.block.x % 16);
+		int px = minimap.getMinimapBaseX(player.block.cx) + (player.block.z % 16);
 
 		g.setStroke(new BasicStroke(2));
 		g.setColor(Color.yellow.brighter());
@@ -3287,38 +3236,6 @@ public class XRay
 	}
 
 	/**
-	 * Returns the "base" minimap X coordinate, given chunk coordinate X. The
-	 * "base" will be the upper left corner.
-	 *
-	 * As of Beta 1.9-pre4, X increases to the east (decreasing to the west),
-	 * and Z increases to the South (decreasing to the North).  This is much nicer
-	 * to deal with then the way we were pretending things worked previously.
-	 *
-	 * param chunkZ
-	 * @return
-	 */
-	private int getMinimapBaseX(int chunkX)
-	{
-		return (((chunkX*16) % minimap.minimap_dim) + minimap.minimap_dim) % minimap.minimap_dim;
-	}
-
-	/**
-	 * Returns the "base" minimap Y coordinate, given chunk coordinate Z. The
-	 * "base" will be the upper left corner.
-	 *
-	 * As of Beta 1.9-pre4, X increases to the east (decreasing to the west),
-	 * and Z increases to the South (decreasing to the North).  This is much nicer
-	 * to deal with then the way we were pretending things worked previously.
-	 *
-	 * @param chunkZ
-	 * @return
-	 */
-	private int getMinimapBaseY(int chunkZ)
-	{
-		return (((chunkZ*16) % minimap.minimap_dim) + minimap.minimap_dim) % minimap.minimap_dim;
-	}
-
-	/**
 	 * Clears out the area on the minimap belonging to this chunk
 	 *
 	 * @param x
@@ -3328,7 +3245,7 @@ public class XRay
 	{
 		// minimapGraphics.setColor(new Color(0f, 0f, 0f, 1f));
 		// minimapGraphics.setComposite(AlphaComposite.Src);
-		minimapGraphics.fillRect(getMinimapBaseX(x), getMinimapBaseY(z), 16, 16);
+		minimapGraphics.fillRect(minimap.getMinimapBaseX(x), minimap.getMinimapBaseY(z), 16, 16);
 		level.getChunk(x, z).isOnMinimap = false;
 	}
 
@@ -3371,8 +3288,8 @@ public class XRay
 		c.isOnMinimap = true;
 		minimap_data = c.getMinimapValues();
 
-		int base_x = getMinimapBaseX(x);
-		int base_y = getMinimapBaseY(z);
+		int base_x = minimap.getMinimapBaseX(x);
+		int base_y = minimap.getMinimapBaseY(z);
 
 		Color blockColor;
 		Graphics2D g = minimapGraphics;
