@@ -119,11 +119,6 @@ public class XRay
 	public double outOfRangeHeight;
 	public double outOfRangeWidth;
 
-	// the textures used by the minimap
-	private Texture minimapTexture;
-	private Texture minimapArrowTexture;
-	private Graphics2D minimapGraphics;
-
 	// Texture for screenshots
 	public Texture screenshotTexture;
 
@@ -391,7 +386,7 @@ public class XRay
 				// update our minimap if we need to (new chunks loaded, etc)
 				if (minimap.minimap_needs_updating)
 				{
-					minimapTexture.update();
+					minimap.minimapTexture.update();
 					minimap.minimap_needs_updating = false;
 				}
 
@@ -923,8 +918,8 @@ public class XRay
 	{
 		try
 		{
-			minimapTexture = TextureTool.allocateTexture(minimap.minimap_dim, minimap.minimap_dim);
-			minimapGraphics = minimapTexture.getImage().createGraphics();
+			minimap.minimapTexture = TextureTool.allocateTexture(minimap.minimap_dim, minimap.minimap_dim);
+			minimap.minimapGraphics = minimap.minimapTexture.getImage().createGraphics();
 			loadingTextTexture = TextureTool.allocateTexture(1024, 64);
 		}
 		catch (IOException e1)
@@ -962,7 +957,7 @@ public class XRay
 		{
 			// Note that in order to avoid weird texture-resize fuzziness, these textures
 			// should have dimensions which are powers of 2
-			minimapArrowTexture = TextureTool.allocateTexture(32, 32);
+			minimap.minimapArrowTexture = TextureTool.allocateTexture(32, 32);
 			fpsTexture = TextureTool.allocateTexture(128, 32);
 			levelInfoTexture = TextureTool.allocateTexture(128, 256);
 			renderDetailsTexture = TextureTool.allocateTexture(256, 256);
@@ -2319,7 +2314,7 @@ public class XRay
 	 */
 	private void drawSpawnMarkerToMinimap()
 	{
-		Graphics2D g = minimapGraphics;
+		Graphics2D g = minimap.minimapGraphics;
 
 		CameraPreset spawn = level.getSpawnPoint();
 		int sy = minimap.getMinimapBaseY(spawn.block.cz) + (spawn.block.x % 16);
@@ -2330,7 +2325,7 @@ public class XRay
 		g.drawOval(sx - 6, sy - 6, 11, 11);
 		g.drawLine(sx - 8, sy, sx + 8, sy);
 		g.drawLine(sx, sy - 8, sx, sy + 8);
-		minimapTexture.update();
+		minimap.minimapTexture.update();
 	}
 
 	/***
@@ -2338,7 +2333,7 @@ public class XRay
 	 */
 	private void drawPlayerposMarkerToMinimap()
 	{
-		Graphics2D g = minimapGraphics;
+		Graphics2D g = minimap.minimapGraphics;
 
 		CameraPreset player = level.getPlayerPosition();
 		int py = minimap.getMinimapBaseY(player.block.cz) + (player.block.x % 16);
@@ -2349,7 +2344,7 @@ public class XRay
 		g.drawOval(px - 6, py - 6, 11, 11);
 		g.drawLine(px - 8, py, px + 8, py);
 		g.drawLine(px, py - 8, px, py + 8);
-		minimapTexture.update();
+		minimap.minimapTexture.update();
 	}
 
 	/***
@@ -3161,7 +3156,7 @@ public class XRay
 			// just draws the texture, but move the texture so the middle of the
 			// screen is where we currently are
 
-			minimapTexture.bind();
+			minimap.minimapTexture.bind();
 
 			float vSizeFactor = .5f;
 
@@ -3191,7 +3186,7 @@ public class XRay
 			GL11.glColor4f(1.0f, 1.0f, 1.0f, 1f);
 
 			//SpriteTool.drawSpriteAndRotateAndScale(minimapArrowTexture, screenWidth / 2.0f, screenHeight / 2.0f, camera.getYaw() + 90, 0.5f);
-			SpriteTool.drawSpriteAndRotateAndScale(minimapArrowTexture, screenWidth / 2.0f, screenHeight / 2.0f, camera.getYaw(), 0.5f);
+			SpriteTool.drawSpriteAndRotateAndScale(minimap.minimapArrowTexture, screenWidth / 2.0f, screenHeight / 2.0f, camera.getYaw(), 0.5f);
 		}
 		else
 		{
@@ -3208,7 +3203,7 @@ public class XRay
 			float vTexY = (1.0f / minimap.minimap_dim_f) * currentCameraPos.z;
 			float vTexZ = vSizeFactor;
 
-			minimapTexture.bind();
+			minimap.minimapTexture.bind();
 			GL11.glColor4f(1.0f, 1.0f, 1.0f, 0.7f);
 			GL11.glPushMatrix();
 			GL11.glTranslatef(screenWidth - 100, 100, 0.0f);
@@ -3231,7 +3226,7 @@ public class XRay
 			GL11.glColor4f(1.0f, 1.0f, 1.0f, 1f);
 
 			//SpriteTool.drawSpriteAndRotateAndScale(minimapArrowTexture, screenWidth - 100, 100, camera.getYaw() + 90, 0.5f);
-			SpriteTool.drawSpriteAndRotateAndScale(minimapArrowTexture, screenWidth - 100, 100, camera.getYaw(), 0.5f);
+			SpriteTool.drawSpriteAndRotateAndScale(minimap.minimapArrowTexture, screenWidth - 100, 100, camera.getYaw(), 0.5f);
 		}
 	}
 
@@ -3245,7 +3240,7 @@ public class XRay
 	{
 		// minimapGraphics.setColor(new Color(0f, 0f, 0f, 1f));
 		// minimapGraphics.setComposite(AlphaComposite.Src);
-		minimapGraphics.fillRect(minimap.getMinimapBaseX(x), minimap.getMinimapBaseY(z), 16, 16);
+		minimap.minimapGraphics.fillRect(minimap.getMinimapBaseX(x), minimap.getMinimapBaseY(z), 16, 16);
 		level.getChunk(x, z).isOnMinimap = false;
 	}
 
@@ -3256,8 +3251,8 @@ public class XRay
 	 */
 	private void removeChunklistFromMap(ArrayList<Chunk> trimList)
 	{
-		minimapGraphics.setColor(new Color(0f, 0f, 0f, 0f));
-		minimapGraphics.setComposite(AlphaComposite.Src);
+		minimap.minimapGraphics.setColor(new Color(0f, 0f, 0f, 0f));
+		minimap.minimapGraphics.setComposite(AlphaComposite.Src);
 		boolean minimap_changed = false;
 		for (Chunk tempchunk_trim : trimList)
 		{
@@ -3266,7 +3261,7 @@ public class XRay
 		}
 		if (minimap_changed)
 		{
-			minimapTexture.update();
+			minimap.minimapTexture.update();
 		}
 	}
 
@@ -3292,7 +3287,7 @@ public class XRay
 		int base_y = minimap.getMinimapBaseY(z);
 
 		Color blockColor;
-		Graphics2D g = minimapGraphics;
+		Graphics2D g = minimap.minimapGraphics;
 		for (int zz = 0; zz < 16; zz++)
 		{
 			for (int xx = 0; xx < 16; xx++)
@@ -3330,13 +3325,13 @@ public class XRay
 	{
 
 		// First the arrow
-		Graphics2D g = minimapArrowTexture.getImage().createGraphics();
+		Graphics2D g = minimap.minimapArrowTexture.getImage().createGraphics();
 		g.setColor(Color.red);
 		g.setStroke(new BasicStroke(5));
 		g.drawLine(3, 16, 30, 24);
 		g.drawLine(30, 24, 30, 8);
 		g.drawLine(30, 8, 3, 16);
-		minimapArrowTexture.update();
+		minimap.minimapArrowTexture.update();
 	}
 
 	/**
